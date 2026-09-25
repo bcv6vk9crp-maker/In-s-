@@ -22,3 +22,15 @@ describe("retentionCutoff", () => {
     expect(retentionCutoff(new Date("2026-09-25T00:00:00Z")).toISOString()).toBe("2025-09-25T00:00:00.000Z");
   });
 });
+
+describe("csvCell et formules Excel", () => {
+  it("neutralise un texte qui commencerait une formule", () => {
+    expect(csvCell("=HYPERLINK(\"http://x\")")).toBe("\"'=HYPERLINK(\"\"http://x\"\")\"");
+    expect(csvCell("+33 6 12 34 56 78")).toBe("'+33 6 12 34 56 78");
+    expect(csvCell("@cmd")).toBe("'@cmd");
+  });
+
+  it("laisse les nombres intacts", () => {
+    expect(csvCell(-5)).toBe("-5");
+  });
+});

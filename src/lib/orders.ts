@@ -47,6 +47,8 @@ export function slugify(text: string): string {
 
 /** Champ texte de CSV (séparateur « ; ») avec guillemets si nécessaire. */
 export function csvCell(value: string | number | null | undefined): string {
-  const s = value === null || value === undefined ? "" : String(value);
+  let s = value === null || value === undefined ? "" : String(value);
+  // Un texte saisi par un acheteur qui commence par = + - @ serait exécuté comme formule par Excel.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }

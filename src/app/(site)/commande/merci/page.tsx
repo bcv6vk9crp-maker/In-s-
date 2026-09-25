@@ -13,7 +13,7 @@ export default async function ThanksPage(props: PageProps<"/commande/merci">) {
       <span className="hand" style={{ fontSize: 30 }}>
         {t.thanks.title}
       </span>
-      <p style={{ maxWidth: "60ch" }}>{t.thanks.body.replace("{number}", number)}</p>
+      <p style={{ maxWidth: "60ch" }}>{t.thanks.body.replace(" {number}", number ? ` ${number}` : "")}</p>
       <Link href="/" className="btn">
         {t.thanks.back}
       </Link>

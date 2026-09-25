@@ -143,7 +143,10 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
       .from("photos")
       .update({ ...fields, ...(imageFields ?? {}) })
       .eq("id", existing.id);
-    if (error) return { error: error.message };
+    if (error) {
+      if (imageFields) await db().storage.from(PHOTO_BUCKET).remove([imageFields.image_path]);
+      return { error: error.message };
+    }
     if (imageFields) await db().storage.from(PHOTO_BUCKET).remove([existing.image_path]);
   } else {
     const slug = await uniqueSlug(fields.title_fr);

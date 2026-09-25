@@ -8,9 +8,22 @@ import { db } from "@/lib/supabase/db";
 
 type Result =
   | { ok: true; number: string }
-  | { ok: false; fields: string[]; unavailable: string[] };
+  | { ok: false; reason: "fields" | "unavailable" | "tooMany" | "server"; fields: string[]; unavailable: string[] };
+
+// Au-delà, on suppose un robot ou une erreur de manipulation (et on évite d'envoyer des emails en masse).
+const MAX_ORDERS_PER_EMAIL = 3;
+const THROTTLE_MINUTES = 15;
 
 export async function placeOrder(input: unknown): Promise<Result> {
+  try {
+    return await createOrder(input);
+  } catch (e) {
+    console.error("Commande impossible", e);
+    return { ok: false, reason: "server", fields: [], unavailable: [] };
+  }
+}
+
+async function createOrder(input: unknown): Promise<Result> {
   // Champ piège rempli : on fait comme si tout allait bien, sans rien enregistrer.
   if (input && typeof input === "object" && "website" in input && (input as { website: unknown }).website) {
     return { ok: true, number: "" };
@@ -19,16 +32,26 @@ export async function placeOrder(input: unknown): Promise<Result> {
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
     const fields = [...new Set(parsed.error.issues.map((i) => String(i.path[0])))];
-    return { ok: false, fields, unavailable: [] };
+    return { ok: false, reason: "fields", fields, unavailable: [] };
   }
   const order = parsed.data;
+
+  const since = new Date(Date.now() - THROTTLE_MINUTES * 60 * 1000).toISOString();
+  const { count } = await db()
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .ilike("email", order.email.replace(/[\\%_]/g, "\\$&"))
+    .gte("created_at", since);
+  if ((count ?? 0) >= MAX_ORDERS_PER_EMAIL) {
+    return { ok: false, reason: "tooMany", fields: [], unavailable: [] };
+  }
   const items = mergeCartItems(order.items);
 
   const ids = [...new Set(items.map((i) => i.photoId))];
   const [photos, settings] = await Promise.all([getVisiblePhotosByIds(ids), getSettings()]);
   const byId = new Map(photos.map((p) => [p.id, p]));
   const unavailable = ids.filter((id) => !byId.has(id));
-  if (unavailable.length > 0) return { ok: false, fields: [], unavailable };
+  if (unavailable.length > 0) return { ok: false, reason: "unavailable", fields: [], unavailable };
 
   const lines = items.map((item) => {
     const photo = byId.get(item.photoId)!;

@@ -67,6 +67,8 @@ Se connecter sur `/admin`, puis, dans cet ordre :
 2. **Collections** : créer les séries.
 3. **Photos** : ajouter les photos, puis passer une commande de test.
 
+Les cas d'usage, le plan de test et les points du besoin à confirmer avec Ines sont détaillés dans [`docs/plan-de-test.md`](docs/plan-de-test.md).
+
 ## Développement
 
 ```bash
@@ -74,6 +76,7 @@ npm install
 cp .env.example .env.local   # puis compléter
 npm run dev                  # http://localhost:3000
 npm test                     # tests unitaires (prix, validation des commandes, export)
+npm run test:e2e             # recette de bout en bout (voir docs/plan-de-test.md)
 npm run lint && npm run typecheck
 ```
 

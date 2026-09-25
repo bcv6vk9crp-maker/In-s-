@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { MAX_QUANTITY, type Size } from "@/lib/pricing";
+import { MAX_QUANTITY, SIZES, type Size } from "@/lib/pricing";
 
 export type CartLine = {
   photoId: string;
@@ -29,11 +29,27 @@ type CartContextValue = {
 const STORAGE_KEY = "inesb-cart-v1";
 const CartContext = createContext<CartContextValue | null>(null);
 
+function isCartLine(v: unknown): v is CartLine {
+  if (!v || typeof v !== "object") return false;
+  const l = v as Record<string, unknown>;
+  return (
+    typeof l.photoId === "string" &&
+    SIZES.includes(l.size as Size) &&
+    typeof l.framed === "boolean" &&
+    Number.isInteger(l.quantity) &&
+    (l.quantity as number) >= 1 &&
+    (l.quantity as number) <= MAX_QUANTITY &&
+    typeof l.slug === "string" &&
+    typeof l.titleFr === "string" &&
+    typeof l.imageUrl === "string"
+  );
+}
+
 function readStorage(): CartLine[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(isCartLine) : [];
   } catch {
     return [];
   }

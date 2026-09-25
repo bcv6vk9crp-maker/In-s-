@@ -25,6 +25,11 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
   if (lines.length === 0) {
     return (
       <div className="empty">
+        {error && (
+          <p className="alert" role="alert">
+            {error}
+          </p>
+        )}
         <p className="muted">{t.checkout.emptyCart}</p>
         <Link href="/" className="btn">
           {t.cart.browse}
@@ -63,9 +68,13 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
         router.push(`/commande/merci?n=${encodeURIComponent(result.number)}`);
         return;
       }
-      if (result.unavailable.length > 0) {
+      if (result.reason === "unavailable") {
         removePhotos(result.unavailable);
         setError(t.cart.unavailable);
+      } else if (result.reason === "tooMany") {
+        setError(t.checkout.tooMany);
+      } else if (result.reason === "server") {
+        setError(t.checkout.serverError);
       } else {
         setError(t.checkout.error);
       }

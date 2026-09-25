@@ -61,6 +61,8 @@ const fr = {
     summary: "Récapitulatif",
     emptyCart: "Votre panier est vide.",
     error: "La commande n'a pas pu être envoyée. Vérifiez les champs signalés puis réessayez.",
+    tooMany: "Plusieurs commandes viennent d'être envoyées avec cet email. Patientez quelques minutes ou écrivez directement à Ines.",
+    serverError: "Un problème technique a empêché l'envoi. Votre panier est conservé : réessayez dans un instant.",
   },
   thanks: {
     title: "Merci !",
@@ -129,6 +131,8 @@ const en: Dict = {
     summary: "Summary",
     emptyCart: "Your cart is empty.",
     error: "Your order could not be sent. Check the highlighted fields and try again.",
+    tooMany: "Several orders were just sent with this email. Please wait a few minutes or write to Ines directly.",
+    serverError: "A technical problem prevented sending. Your cart is kept: please try again in a moment.",
   },
   thanks: {
     title: "Thank you!",

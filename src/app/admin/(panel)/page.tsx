@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         </div>
         <div className="stat">
           <b>{formatEuros(monthPaid)}</b>
-          <span>encaissé en {monthName}</span>
+          <span>payé sur les commandes de {monthName}</span>
         </div>
       </div>
 
