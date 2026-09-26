@@ -8,10 +8,11 @@ Il n'y a **aucun paiement en ligne**. L'acheteur remplit son panier et envoie se
 
 **Côté public** (français / anglais) :
 - galerie filtrable par collection (une photo peut appartenir à plusieurs collections) ;
-- fiche de chaque photo : format 20 × 30 ou 40 × 60, option cadre, quantité de 1 à 10 ;
+- fiche de chaque photo : choix du format (4 par défaut, du 20 × 30 au 60 × 90), option cadre, quantité de 1 à 10 ;
+- galerie où chaque vignette garde la forme réelle de sa photo (portrait ou paysage) ;
 - panier conservé dans le navigateur, sans création de compte ;
-- formulaire de commande : prénom, nom, email, téléphone (facultatif), retrait ou livraison (l'adresse est alors obligatoire), message, consentement RGPD ;
-- email d'alerte à Ines et email récapitulatif à l'acheteur ;
+- formulaire de commande : prénom, nom, email, téléphone (facultatif), retrait (lieu affiché, gratuit) ou livraison (adresse obligatoire, forfait de port), message, consentement RGPD ;
+- email d'alerte à Ines. Un récapitulatif part aussi vers l'acheteur, mais seulement une fois un nom de domaine vérifié (voir Resend) : la page de remerciement ne le promet donc pas ;
 - pages À propos, Contact, Mentions légales, Conditions de vente et Confidentialité.
 
 **Espace admin** (`/admin`, réservé à Ines) :
@@ -19,7 +20,9 @@ Il n'y a **aucun paiement en ligne**. L'acheteur remplit son panier et envoie se
 - commandes : filtre par statut (Nouvelle → Contactée → Payée → Expédiée / remise, ou Annulée), notes internes, anonymisation, suppression, export CSV lisible dans Excel ;
 - photos : ajout une par une. L'image est réduite à 1600 px et reçoit le filigrane « © Ines. B » **dans le navigateur**, donc l'original n'est jamais mis en ligne ;
 - collections, avec une petite note manuscrite affichée sous le titre ;
-- réglages : prix, suppléments cadre par format, email d'alerte, textes du site, informations légales.
+- formats et prix : Ines ajoute, modifie ou désactive ses formats. Pour chacun : prix du tirage, supplément cadre, forfait de port. Le port est compté une seule fois par commande, au montant du plus grand format du panier ;
+- réglages : email d'alerte, lieu de retrait, textes du site, informations légales ;
+- mot de passe oublié : lien envoyé par email depuis la page de connexion.
 
 Les coordonnées des acheteurs sont **anonymisées automatiquement un an après la commande**. Le détail et le montant de la commande sont conservés pour la comptabilité.
 
@@ -30,14 +33,17 @@ Les comptes sont créés au nom d'Ines, avec son email. Elle en reste propriéta
 ### 1. Supabase (base de données et stockage des images)
 
 1. Créer un compte sur [supabase.com](https://supabase.com), puis un projet. **Région : Europe** (Paris ou Frankfurt), pour le RGPD.
-2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**.
+2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**. Recommencer avec [`0002_formats_port_retrait.sql`](supabase/migrations/0002_formats_port_retrait.sql), qui crée les 4 formats par défaut.
 3. Ouvrir **Authentication → Users → Add user → Create new user** : saisir l'email et le mot de passe qu'Ines utilisera pour se connecter à l'admin, et cocher *Auto Confirm User*.
 4. Dans **Authentication → Sign In / Providers**, désactiver *Allow new users to sign up*, pour que personne d'autre ne puisse créer de compte.
 5. Dans **Project Settings → API Keys**, noter l'URL du projet, la *Publishable key* et la *Secret key*.
+6. **Pour le mot de passe oublié** :
+   - dans **Authentication → URL Configuration**, mettre l'adresse du site dans *Site URL*, et ajouter `https://<adresse du site>/admin/auth/callback` dans *Redirect URLs* ;
+   - le service d'email intégré à Supabase n'écrit qu'aux membres du projet. Le compte admin (étape 3) doit donc utiliser **le même email que le compte Supabase d'Ines**. Sinon, brancher Resend dans **Authentication → Emails → SMTP Settings**.
 
 ### 2. Resend (envoi des emails)
 
-1. Créer un compte sur [resend.com](https://resend.com) **avec l'email d'Ines**.
+1. Créer un compte sur [resend.com](https://resend.com) **avec l'adresse où Ines veut recevoir les commandes**. Sans nom de domaine, Resend n'écrit qu'à cette adresse-là : si elle diffère de l'email d'alerte réglé dans l'admin, les alertes n'arrivent pas.
 2. **API Keys → Create API Key**, puis noter la clé.
 3. Tant qu'aucun nom de domaine n'est vérifié, Resend envoie seulement vers l'email du compte. Ines reçoit donc ses alertes, mais **les acheteurs ne reçoivent pas encore leur récapitulatif**. Une fois le nom de domaine acheté (par exemple `inesb.fr`), l'ajouter dans **Domains**, puis remplacer `EMAIL_FROM` par une adresse de ce domaine, par exemple `Ines. B <commandes@inesb.fr>`.
 
@@ -63,9 +69,10 @@ Les comptes sont créés au nom d'Ines, avec son email. Elle en reste propriéta
 ### 4. Premiers pas dans l'admin
 
 Se connecter sur `/admin`, puis, dans cet ordre :
-1. **Réglages** : vérifier les prix et saisir le supplément cadre de chaque format, l'email qui reçoit les alertes, les textes À propos et Contact, et les informations légales (nom, statut, SIRET, mention TVA, adresse). Tant qu'une information légale est vide, le site affiche « [à compléter] ».
-2. **Collections** : créer les séries.
-3. **Photos** : ajouter les photos, puis passer une commande de test.
+1. **Formats et prix** : vérifier les 4 formats proposés par défaut, leurs prix, le supplément cadre et le port, et les ajuster.
+2. **Réglages** : saisir l'email qui reçoit les alertes (le même que le compte Resend), le lieu de retrait, les textes À propos et Contact, et les informations légales (nom, statut, SIRET, mention TVA, adresse). Tant qu'une information légale est vide, le site affiche « [à compléter] ».
+3. **Collections** : créer les séries.
+4. **Photos** : ajouter les photos, puis passer une commande de test et vérifier que l'alerte arrive.
 
 Les cas d'usage, le plan de test et les points du besoin à confirmer avec Ines sont détaillés dans [`docs/plan-de-test.md`](docs/plan-de-test.md).
 

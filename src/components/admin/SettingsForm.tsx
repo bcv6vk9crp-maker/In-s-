@@ -1,11 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useSubmit } from "@/components/admin/useSubmit";
 import { saveSettings } from "@/app/admin/actions";
 import type { Settings } from "@/lib/data";
-
-const euros = (cents: number) => (cents / 100).toFixed(2).replace(".", ",").replace(",00", "");
 
 function Text({
   name,
@@ -40,22 +39,10 @@ export function SettingsForm({ settings: s, adminEmail }: { settings: Settings; 
   const onSubmit = useSubmit(action);
   return (
     <form onSubmit={onSubmit} className="form-grid">
-      <section className="card form-grid">
-        <h2 className="section-title" style={{ marginTop: 0 }}>
-          Prix (en euros)
-        </h2>
-        <div className="field-row">
-          <Text name="price_small" label="Tirage 20 × 30" value={euros(s.price_small_cents)} />
-          <Text name="price_large" label="Tirage 40 × 60" value={euros(s.price_large_cents)} />
-        </div>
-        <div className="field-row">
-          <Text name="frame_small" label="Supplément cadre 20 × 30" value={euros(s.frame_small_cents)} />
-          <Text name="frame_large" label="Supplément cadre 40 × 60" value={euros(s.frame_large_cents)} />
-        </div>
-        <p className="hint muted" style={{ fontSize: 13 }}>
-          Les nouveaux prix s&apos;appliquent aux prochaines commandes. Les commandes déjà reçues gardent leur prix.
-        </p>
-      </section>
+      <p className="muted" style={{ fontSize: 14 }}>
+        Les prix des tirages, du cadre et du port se règlent dans{" "}
+        <Link href="/admin/formats">Formats et prix</Link>.
+      </p>
 
       <section className="card form-grid">
         <h2 className="section-title" style={{ marginTop: 0 }}>
@@ -72,6 +59,12 @@ export function SettingsForm({ settings: s, adminEmail }: { settings: Settings; 
           <Text name="contact_email" type="email" label="Email affiché sur la page Contact" value={s.contact_email} />
           <Text name="instagram" label="Compte Instagram" value={s.instagram} hint="Par exemple @ines.b.photo" />
         </div>
+        <Text
+          name="pickup_location"
+          label="Lieu de retrait en main propre"
+          value={s.pickup_location}
+          hint="Affiché quand l'acheteur choisit le retrait, par exemple « Marseille, 6ᵉ arrondissement ». Si vide : « lieu à convenir »."
+        />
       </section>
 
       <section className="card form-grid">

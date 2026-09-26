@@ -4,19 +4,29 @@ import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { QuantityInput } from "@/components/QuantityInput";
+import { useActiveFormats } from "@/components/useActiveFormats";
 import { pick } from "@/lib/i18n";
-import { formatEuros, sizeLabel, unitPriceCents, type Prices } from "@/lib/pricing";
+import { formatEuros, shippingCents, unitPriceCents, type FormatPrice } from "@/lib/pricing";
 
-export function CartView({ prices }: { prices: Prices }) {
+export function CartView({ formats }: { formats: FormatPrice[] }) {
   const { locale, t } = useI18n();
   const { lines, ready, setQuantity, remove } = useCart();
+  const { byId, formatRemoved } = useActiveFormats(formats);
 
   if (!ready) return null;
 
-  if (lines.length === 0) {
+  const notice = formatRemoved && (
+    <p className="alert" role="status">
+      {t.cart.formatUnavailable}
+    </p>
+  );
+
+  const priced = lines.filter((l) => byId.has(l.formatId));
+  if (priced.length === 0) {
     return (
       <div className="empty">
         <h1>{t.cart.title}</h1>
+        {notice}
         <p className="muted">{t.cart.empty}</p>
         <Link href="/" className="btn">
           {t.cart.browse}
@@ -25,20 +35,24 @@ export function CartView({ prices }: { prices: Prices }) {
     );
   }
 
-  const total = lines.reduce((sum, l) => sum + unitPriceCents(prices, l.size, l.framed) * l.quantity, 0);
+  const subtotal = priced.reduce((sum, l) => sum + unitPriceCents(byId.get(l.formatId)!, l.framed) * l.quantity, 0);
+  const shipping = shippingCents(priced.map((l) => byId.get(l.formatId)!), "livraison");
 
   return (
     <>
       <div className="page-head">
         <h1>{t.cart.title}</h1>
       </div>
+      {notice}
       <div className="two-cols">
         <ul className="cart-lines" style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {lines.map((l, i) => {
+            const format = byId.get(l.formatId);
+            if (!format) return null;
             const title = pick(locale, l.titleFr, l.titleEn);
-            const unit = unitPriceCents(prices, l.size, l.framed);
+            const unit = unitPriceCents(format, l.framed);
             return (
-              <li key={`${l.photoId}-${l.size}-${l.framed}`} className="cart-line">
+              <li key={`${l.photoId}-${l.formatId}-${l.framed}`} className="cart-line">
                 <Link href={`/photos/${l.slug}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={l.imageUrl} alt={title} />
@@ -46,7 +60,7 @@ export function CartView({ prices }: { prices: Prices }) {
                 <div className="meta">
                   <b>{title}</b>
                   <span>
-                    {sizeLabel(l.size)} · {l.framed ? t.photo.withFrame : t.photo.noFrame}
+                    {format.label} · {l.framed ? t.photo.withFrame : t.photo.noFrame}
                   </span>
                   <span>{formatEuros(unit, locale)}</span>
                 </div>
@@ -63,11 +77,11 @@ export function CartView({ prices }: { prices: Prices }) {
         </ul>
         <aside className="card summary">
           <div className="total-row" style={{ borderTop: 0, paddingTop: 0 }}>
-            <span>{t.cart.total}</span>
-            <span>{formatEuros(total, locale)}</span>
+            <span>{t.cart.subtotal}</span>
+            <span>{formatEuros(subtotal, locale)}</span>
           </div>
           <p className="muted" style={{ fontSize: 13 }}>
-            {t.cart.shippingNote}
+            {t.cart.shippingNote.replace("{amount}", formatEuros(shipping, locale))}
           </p>
           <Link href="/commande" className="btn">
             {t.cart.checkout}

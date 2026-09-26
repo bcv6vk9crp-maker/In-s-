@@ -1,9 +1,10 @@
 import "server-only";
 import { db, publicImageUrl } from "@/lib/supabase/db";
-import type { Prices } from "@/lib/pricing";
+import type { FormatPrice } from "@/lib/pricing";
 
-export type Settings = Prices & {
+export type Settings = {
   notification_email: string | null;
+  pickup_location: string;
   contact_email: string | null;
   instagram: string | null;
   about_fr: string;
@@ -15,6 +16,11 @@ export type Settings = Prices & {
   siret: string;
   vat_mention: string;
   legal_address: string;
+};
+
+export type Format = FormatPrice & {
+  position: number;
+  active: boolean;
 };
 
 export type Collection = {
@@ -68,6 +74,12 @@ function check<T>(result: { data: T | null; error: { message: string } | null })
 
 export async function getSettings(): Promise<Settings> {
   return check(await db().from("settings").select("*").eq("id", 1).single());
+}
+
+export async function getFormats(opts: { onlyActive: boolean }): Promise<Format[]> {
+  let q = db().from("formats").select("*").order("position").order("price_cents");
+  if (opts.onlyActive) q = q.eq("active", true);
+  return check(await q);
 }
 
 export async function getCollections(opts: { onlyVisible: boolean }): Promise<Collection[]> {

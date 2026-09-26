@@ -16,7 +16,8 @@ type OrderRow = {
   created_at: string;
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: PageProps<"/admin">) {
+  const { "mot-de-passe": passwordChanged } = await props.searchParams;
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
@@ -52,6 +53,8 @@ export default async function DashboardPage() {
           Exporter les commandes (CSV)
         </a>
       </div>
+
+      {passwordChanged === "modifie" && <p className="alert alert-ok">Votre mot de passe a été modifié.</p>}
 
       <div className="stats">
         <div className="stat">

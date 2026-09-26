@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { csvCell, isOrderStatus, STATUS_LABELS, type OrderStatus } from "@/lib/orders";
-import { formatOrderNumber, sizeLabel, type Size } from "@/lib/pricing";
+import { formatOrderNumber } from "@/lib/pricing";
 import { currentAdminEmail } from "@/lib/supabase/auth";
 import { db } from "@/lib/supabase/db";
 
@@ -19,8 +19,9 @@ type Row = {
   country: string | null;
   message: string | null;
   internal_notes: string;
+  shipping_cents: number;
   total_cents: number;
-  order_items: { photo_title: string; size: Size; framed: boolean; quantity: number }[];
+  order_items: { photo_title: string; format_label: string; framed: boolean; quantity: number }[];
 };
 
 const euros = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   const statut = request.nextUrl.searchParams.get("statut");
   let q = db()
     .from("orders")
-    .select("*, order_items(photo_title, size, framed, quantity)")
+    .select("*, order_items(photo_title, format_label, framed, quantity)")
     .order("created_at", { ascending: false });
   if (isOrderStatus(statut)) q = q.eq("status", statut);
   const { data, error } = await q;
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   const header = [
     "Numéro", "Date", "Statut", "Prénom", "Nom", "Email", "Téléphone", "Réception",
-    "Adresse", "Code postal", "Ville", "Pays", "Tirages", "Total (€)", "Message", "Notes internes",
+    "Adresse", "Code postal", "Ville", "Pays", "Tirages", "Port (€)", "Total (€)", "Message", "Notes internes",
   ];
   const lines = (data as Row[]).map((o) =>
     [
@@ -56,8 +57,9 @@ export async function GET(request: NextRequest) {
       o.city,
       o.country,
       o.order_items
-        .map((i) => `${i.quantity} × ${i.photo_title} (${sizeLabel(i.size)}${i.framed ? ", cadre" : ""})`)
+        .map((i) => `${i.quantity} × ${i.photo_title} (${i.format_label}${i.framed ? ", cadre" : ""})`)
         .join(" | "),
+      euros(o.shipping_cents),
       euros(o.total_cents),
       o.message,
       o.internal_notes,

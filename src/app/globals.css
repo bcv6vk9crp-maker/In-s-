@@ -108,14 +108,15 @@ p { margin: 0; }
 
 /* Galerie */
 .page-head { display: grid; gap: 6px; margin-block: 24px 20px; }
-.gallery { display: grid; gap: 34px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); margin-top: 28px; }
-.print { display: grid; gap: 10px; text-decoration: none; }
+/* Colonnes : chaque vignette garde la forme réelle de sa photo (portrait ou paysage). */
+.gallery { columns: 3 240px; column-gap: 26px; margin-top: 28px; }
+.print { display: grid; gap: 10px; text-decoration: none; break-inside: avoid; margin-bottom: 34px; }
 .print-frame { background: var(--paper); padding: 8px; box-shadow: var(--shadow); transition: transform 0.25s ease; }
 .print:hover .print-frame { transform: translateY(-3px); }
-.print-frame img { width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; background: var(--peach-deep); }
+.print-frame img { width: 100%; height: auto; background: var(--peach-deep); }
 .print-caption { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); }
 .print-caption b { color: var(--ink); font-weight: 600; }
-@media (max-width: 560px) { .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; } .print-frame { padding: 5px; } .print-caption { flex-direction: column; gap: 0; font-size: 13px; } }
+@media (max-width: 560px) { .gallery { columns: 2; column-gap: 14px; } .print { margin-bottom: 24px; } .print-frame { padding: 5px; } .print-caption { flex-direction: column; gap: 0; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .print-frame { transition: none; } }
 
 /* Fiche photo */

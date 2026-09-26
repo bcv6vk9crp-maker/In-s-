@@ -31,6 +31,31 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   redirect("/admin");
 }
 
+export async function requestPasswordReset(_: FormState, form: FormData): Promise<FormState> {
+  const email = str(form, "email").toLowerCase();
+  // Même réponse dans tous les cas : on ne révèle pas quelle adresse est celle de l'admin.
+  const done = { ok: "Si cette adresse est celle du compte admin, un email vient d'être envoyé avec un lien pour choisir un nouveau mot de passe." };
+  if (email !== env.adminEmail) return done;
+  const supabase = await authClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${env.siteUrl}/admin/auth/callback`,
+  });
+  if (error) console.error("Email de réinitialisation non envoyé", error.message);
+  return done;
+}
+
+export async function updatePassword(_: FormState, form: FormData): Promise<FormState> {
+  await requireAdmin();
+  const password = String(form.get("password") ?? "");
+  const confirm = String(form.get("confirm") ?? "");
+  if (password.length < 10) return { error: "Choisissez un mot de passe d'au moins 10 caractères." };
+  if (password !== confirm) return { error: "Les deux mots de passe ne sont pas identiques." };
+  const supabase = await authClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: `Mot de passe non modifié : ${error.message}` };
+  redirect("/admin?mot-de-passe=modifie");
+}
+
 export async function signOut() {
   const supabase = await authClient();
   await supabase.auth.signOut();
@@ -225,6 +250,41 @@ export async function deleteCollection(id: string) {
   revalidatePath("/", "layout");
 }
 
+/* ---------- Formats ---------- */
+
+export async function saveFormat(formatId: string | null, _: FormState, form: FormData): Promise<FormState> {
+  await requireAdmin();
+  const label = str(form, "label").slice(0, 40);
+  if (!label) return { error: "Le nom du format est obligatoire (par exemple « 30 × 45 cm »)." };
+  const values = {
+    label,
+    price_cents: euros(str(form, "price")),
+    frame_cents: euros(str(form, "frame")),
+    shipping_cents: euros(str(form, "shipping")),
+    position: Number(str(form, "position") || 0),
+    active: form.get("active") === "on",
+  };
+  if (values.price_cents === null || values.frame_cents === null || values.shipping_cents === null) {
+    return { error: "Un des montants est invalide." };
+  }
+  if (!Number.isInteger(values.position)) return { error: "Ordre invalide." };
+
+  const { error } = formatId
+    ? await db().from("formats").update(values).eq("id", formatId)
+    : await db().from("formats").insert(values);
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  return { ok: formatId ? "Format enregistré." : "Format ajouté.", at: Date.now() };
+}
+
+export async function deleteFormat(id: string) {
+  await requireAdmin();
+  // Les commandes passées gardent le nom du format (copie dans chaque ligne).
+  const { error } = await db().from("formats").delete().eq("id", id);
+  if (error) fail(error.message);
+  revalidatePath("/", "layout");
+}
+
 /* ---------- Réglages ---------- */
 
 function euros(value: string): number | null {
@@ -234,13 +294,6 @@ function euros(value: string): number | null {
 
 export async function saveSettings(_: FormState, form: FormData): Promise<FormState> {
   await requireAdmin();
-  const prices = {
-    price_small_cents: euros(str(form, "price_small")),
-    price_large_cents: euros(str(form, "price_large")),
-    frame_small_cents: euros(str(form, "frame_small")),
-    frame_large_cents: euros(str(form, "frame_large")),
-  };
-  if (Object.values(prices).some((v) => v === null)) return { error: "Un des prix est invalide." };
 
   const notification = str(form, "notification_email");
   const contact = str(form, "contact_email");
@@ -252,6 +305,7 @@ export async function saveSettings(_: FormState, form: FormData): Promise<FormSt
   const texts = Object.fromEntries(
     [
       "instagram",
+      "pickup_location",
       "about_fr",
       "about_en",
       "contact_intro_fr",
@@ -267,7 +321,6 @@ export async function saveSettings(_: FormState, form: FormData): Promise<FormSt
   const { error } = await db()
     .from("settings")
     .update({
-      ...prices,
       ...texts,
       notification_email: notification || null,
       contact_email: contact || null,

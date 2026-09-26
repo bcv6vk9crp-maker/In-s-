@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { MAX_QUANTITY, SIZES, type Size } from "@/lib/pricing";
+import { MAX_QUANTITY } from "@/lib/pricing";
 
 export type CartLine = {
   photoId: string;
-  size: Size;
+  formatId: string;
+  formatLabel: string;
   framed: boolean;
   quantity: number;
   // Copie pour l'affichage ; le serveur recalcule tout à la validation.
@@ -23,10 +24,11 @@ type CartContextValue = {
   setQuantity: (index: number, quantity: number) => void;
   remove: (index: number) => void;
   removePhotos: (photoIds: string[]) => void;
+  removeFormats: (formatIds: string[]) => void;
   clear: () => void;
 };
 
-const STORAGE_KEY = "inesb-cart-v1";
+const STORAGE_KEY = "inesb-cart-v2";
 const CartContext = createContext<CartContextValue | null>(null);
 
 function isCartLine(v: unknown): v is CartLine {
@@ -34,7 +36,8 @@ function isCartLine(v: unknown): v is CartLine {
   const l = v as Record<string, unknown>;
   return (
     typeof l.photoId === "string" &&
-    SIZES.includes(l.size as Size) &&
+    typeof l.formatId === "string" &&
+    typeof l.formatLabel === "string" &&
     typeof l.framed === "boolean" &&
     Number.isInteger(l.quantity) &&
     (l.quantity as number) >= 1 &&
@@ -91,7 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       add: (line) =>
         update((prev) => {
           const i = prev.findIndex(
-            (l) => l.photoId === line.photoId && l.size === line.size && l.framed === line.framed,
+            (l) => l.photoId === line.photoId && l.formatId === line.formatId && l.framed === line.framed,
           );
           if (i === -1) return [...prev, line];
           return prev.map((l, j) =>
@@ -106,6 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ),
       remove: (index) => update((prev) => prev.filter((_, i) => i !== index)),
       removePhotos: (ids) => update((prev) => prev.filter((l) => !ids.includes(l.photoId))),
+      removeFormats: (ids) => update((prev) => prev.filter((l) => !ids.includes(l.formatId))),
       clear: () => update(() => []),
     }),
     [lines, ready, update],

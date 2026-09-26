@@ -1,23 +1,27 @@
-export const SIZES = ["20x30", "40x60"] as const;
-export type Size = (typeof SIZES)[number];
-
 export const MAX_QUANTITY = 10;
 
-export type Prices = {
-  price_small_cents: number;
-  price_large_cents: number;
-  frame_small_cents: number;
-  frame_large_cents: number;
+/** Ce dont le calcul des prix a besoin d'un format. */
+export type FormatPrice = {
+  id: string;
+  label: string;
+  price_cents: number;
+  frame_cents: number;
+  shipping_cents: number;
 };
 
-export function unitPriceCents(prices: Prices, size: Size, framed: boolean): number {
-  const base = size === "20x30" ? prices.price_small_cents : prices.price_large_cents;
-  const frame = size === "20x30" ? prices.frame_small_cents : prices.frame_large_cents;
-  return base + (framed ? frame : 0);
+export type DeliveryMethod = "retrait" | "livraison";
+
+export function unitPriceCents(format: FormatPrice, framed: boolean): number {
+  return format.price_cents + (framed ? format.frame_cents : 0);
 }
 
-export function sizeLabel(size: Size): string {
-  return size === "20x30" ? "20 × 30 cm" : "40 × 60 cm";
+/**
+ * Forfait de port : compté une seule fois par commande, au montant du plus grand
+ * forfait parmi les formats du panier. Gratuit en retrait.
+ */
+export function shippingCents(formats: FormatPrice[], method: DeliveryMethod): number {
+  if (method === "retrait" || formats.length === 0) return 0;
+  return Math.max(...formats.map((f) => f.shipping_cents));
 }
 
 export function formatEuros(cents: number, locale: string = "fr"): string {

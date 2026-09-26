@@ -6,14 +6,17 @@ import { useState, useTransition } from "react";
 import { placeOrder } from "@/app/(site)/commande/actions";
 import { useCart } from "@/components/CartProvider";
 import { useI18n } from "@/components/I18nProvider";
+import { useActiveFormats } from "@/components/useActiveFormats";
 import { pick } from "@/lib/i18n";
-import { formatEuros, sizeLabel, unitPriceCents, type Prices } from "@/lib/pricing";
+import { formatEuros, shippingCents, unitPriceCents, type DeliveryMethod, type FormatPrice } from "@/lib/pricing";
 
-type Delivery = "retrait" | "livraison";
+type Delivery = DeliveryMethod;
 
-export function CheckoutForm({ prices }: { prices: Prices }) {
+export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice[]; pickupLocation: string }) {
   const { locale, t } = useI18n();
-  const { lines, ready, clear, removePhotos } = useCart();
+  const { lines: allLines, ready, clear, removePhotos, removeFormats } = useCart();
+  const { byId, formatRemoved } = useActiveFormats(formats);
+  const lines = allLines.filter((l) => byId.has(l.formatId));
   const router = useRouter();
   const [delivery, setDelivery] = useState<Delivery>("retrait");
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
@@ -25,9 +28,9 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
   if (lines.length === 0) {
     return (
       <div className="empty">
-        {error && (
+        {(error || formatRemoved) && (
           <p className="alert" role="alert">
-            {error}
+            {error ?? t.cart.formatUnavailable}
           </p>
         )}
         <p className="muted">{t.checkout.emptyCart}</p>
@@ -38,7 +41,9 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
     );
   }
 
-  const total = lines.reduce((sum, l) => sum + unitPriceCents(prices, l.size, l.framed) * l.quantity, 0);
+  const subtotal = lines.reduce((sum, l) => sum + unitPriceCents(byId.get(l.formatId)!, l.framed) * l.quantity, 0);
+  const shipping = shippingCents(lines.map((l) => byId.get(l.formatId)!), delivery);
+  const total = subtotal + shipping;
   const bad = (name: string) => (invalid.has(name) ? "true" : undefined);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -61,7 +66,7 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
         consent: f.get("consent") === "on",
         website: get("website"),
         locale,
-        items: lines.map(({ photoId, size, framed, quantity }) => ({ photoId, size, framed, quantity })),
+        items: lines.map(({ photoId, formatId, framed, quantity }) => ({ photoId, formatId, framed, quantity })),
       });
       if (result.ok) {
         clear();
@@ -70,7 +75,8 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
       }
       if (result.reason === "unavailable") {
         removePhotos(result.unavailable);
-        setError(t.cart.unavailable);
+        removeFormats(result.unavailableFormats);
+        setError(result.unavailable.length > 0 ? t.cart.unavailable : t.cart.formatUnavailable);
       } else if (result.reason === "tooMany") {
         setError(t.checkout.tooMany);
       } else if (result.reason === "server") {
@@ -128,11 +134,15 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
                 </button>
               ))}
             </div>
+            {delivery === "retrait" && (
+              <p className="muted" style={{ fontSize: 13 }}>
+                {pickupLocation
+                  ? t.checkout.pickupPlace.replace("{place}", pickupLocation)
+                  : t.checkout.pickupToAgree}
+              </p>
+            )}
             {delivery === "livraison" && (
               <>
-                <p className="muted" style={{ fontSize: 13 }}>
-                  {t.checkout.shippingNote}
-                </p>
                 <label className="field" data-invalid={bad("addressLine")}>
                   <span>{t.checkout.address}</span>
                   <input id="addressLine" name="addressLine" required autoComplete="street-address" maxLength={200} />
@@ -200,21 +210,22 @@ export function CheckoutForm({ prices }: { prices: Prices }) {
         <aside className="card summary">
           <h2 style={{ fontSize: 20 }}>{t.checkout.summary}</h2>
           {lines.map((l) => (
-            <div key={`${l.photoId}-${l.size}-${l.framed}`} className="summary-line">
+            <div key={`${l.photoId}-${l.formatId}-${l.framed}`} className="summary-line">
               <span>
-                {l.quantity} × {pick(locale, l.titleFr, l.titleEn)}, {sizeLabel(l.size)}
+                {l.quantity} × {pick(locale, l.titleFr, l.titleEn)}, {byId.get(l.formatId)!.label}
                 {l.framed ? `, ${t.photo.withFrame.toLowerCase()}` : ""}
               </span>
-              <span>{formatEuros(unitPriceCents(prices, l.size, l.framed) * l.quantity, locale)}</span>
+              <span>{formatEuros(unitPriceCents(byId.get(l.formatId)!, l.framed) * l.quantity, locale)}</span>
             </div>
           ))}
+          <div className="summary-line">
+            <span>{t.checkout.shipping_cost}</span>
+            <span>{shipping === 0 ? t.checkout.free : formatEuros(shipping, locale)}</span>
+          </div>
           <div className="total-row">
             <span>{t.cart.total}</span>
             <span>{formatEuros(total, locale)}</span>
           </div>
-          <p className="muted" style={{ fontSize: 13 }}>
-            {t.cart.shippingNote}
-          </p>
         </aside>
       </div>
     </>

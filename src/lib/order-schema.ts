@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { MAX_QUANTITY, SIZES } from "@/lib/pricing";
+import { MAX_QUANTITY } from "@/lib/pricing";
 
 export const cartItemSchema = z.object({
   photoId: z.uuid(),
-  size: z.enum(SIZES),
+  formatId: z.uuid(),
   framed: z.boolean(),
   quantity: z.number().int().min(1).max(MAX_QUANTITY),
 });
@@ -43,7 +43,7 @@ export type OrderInput = z.infer<typeof orderSchema>;
 export function mergeCartItems(items: CartItem[]): CartItem[] {
   const merged = new Map<string, CartItem>();
   for (const item of items) {
-    const key = `${item.photoId}|${item.size}|${item.framed}`;
+    const key = `${item.photoId}|${item.formatId}|${item.framed}`;
     const existing = merged.get(key);
     if (existing) {
       existing.quantity = Math.min(MAX_QUANTITY, existing.quantity + item.quantity);

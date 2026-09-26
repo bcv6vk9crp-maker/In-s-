@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSettings } from "@/lib/data";
+import { getFormats, getSettings } from "@/lib/data";
 import { orTodo } from "@/lib/legal";
 import { formatEuros } from "@/lib/pricing";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Conditions de vente" };
 
 export default async function TermsPage() {
-  const s = await getSettings();
+  const [s, formats] = await Promise.all([getSettings(), getFormats({ onlyActive: true })]);
   return (
     <div className="prose" style={{ marginTop: 24 }}>
       <h1>Conditions de vente</h1>
@@ -18,13 +18,22 @@ export default async function TermsPage() {
       </p>
       <h2>2. Produits</h2>
       <p>
-        Tirages photographiques d&apos;art au format 20 × 30 cm ({formatEuros(s.price_small_cents)}) ou 40 × 60 cm (
-        {formatEuros(s.price_large_cents)}), avec en option un cadre ({formatEuros(s.frame_small_cents)} pour le
-        20 × 30, {formatEuros(s.frame_large_cents)} pour le 40 × 60). Les couleurs à l&apos;écran peuvent légèrement
-        différer du tirage papier.
+        Tirages photographiques d&apos;art, proposés dans les formats suivants, avec en option un cadre :
       </p>
-      <h2>3. Prix</h2>
-      <p>Les prix sont indiqués en euros. {orTodo(s.vat_mention)}. Les frais de port éventuels sont convenus avec l&apos;acheteur avant toute validation.</p>
+      <ul style={{ margin: 0, paddingLeft: 20, whiteSpace: "normal" }}>
+        {formats.map((f) => (
+          <li key={f.id}>
+            {f.label} : {formatEuros(f.price_cents)} (cadre : +{formatEuros(f.frame_cents)} ; port en livraison :{" "}
+            {formatEuros(f.shipping_cents)})
+          </li>
+        ))}
+      </ul>
+      <p>Les couleurs à l&apos;écran peuvent légèrement différer du tirage papier.</p>
+      <h2>3. Prix et frais de port</h2>
+      <p>
+        Les prix sont indiqués en euros. {orTodo(s.vat_mention)}. En livraison, un forfait de port est ajouté une seule
+        fois par commande, au montant du plus grand format commandé. Le retrait en main propre est gratuit.
+      </p>
       <h2>4. Commande</h2>
       <p>
         La validation du panier sur le site constitue une demande de commande, sans paiement. La vendeuse recontacte

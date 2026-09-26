@@ -5,7 +5,7 @@ import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { OrderStatusForm } from "@/components/admin/OrderStatusForm";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import type { OrderStatus } from "@/lib/orders";
-import { formatEuros, formatOrderNumber, sizeLabel, type Size } from "@/lib/pricing";
+import { formatEuros, formatOrderNumber } from "@/lib/pricing";
 import { db } from "@/lib/supabase/db";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,7 @@ type Order = {
   message: string | null;
   locale: string;
   consent_at: string;
+  shipping_cents: number;
   total_cents: number;
   internal_notes: string;
   anonymized_at: string | null;
@@ -33,7 +34,7 @@ type Order = {
   order_items: {
     id: string;
     photo_title: string;
-    size: Size;
+    format_label: string;
     framed: boolean;
     unit_price_cents: number;
     quantity: number;
@@ -49,7 +50,7 @@ export default async function OrderPage(props: PageProps<"/admin/commandes/[id]"
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await db()
     .from("orders")
-    .select("*, order_items(id, photo_title, size, framed, unit_price_cents, quantity, photos(slug))")
+    .select("*, order_items(id, photo_title, format_label, framed, unit_price_cents, quantity, photos(slug))")
     .eq("id", id)
     .maybeSingle();
   if (!data) notFound();
@@ -91,7 +92,7 @@ export default async function OrderPage(props: PageProps<"/admin/commandes/[id]"
                         )}
                         <br />
                         <span className="muted">
-                          {sizeLabel(i.size)} · {i.framed ? "avec cadre" : "sans cadre"}
+                          {i.format_label} · {i.framed ? "avec cadre" : "sans cadre"}
                         </span>
                       </td>
                       <td className="num">
@@ -102,7 +103,13 @@ export default async function OrderPage(props: PageProps<"/admin/commandes/[id]"
                   ))}
                   <tr>
                     <td colSpan={2}>
-                      <b>Total (hors frais de port)</b>
+                      Frais de port ({o.delivery_method === "livraison" ? "livraison" : "retrait"})
+                    </td>
+                    <td className="num">{o.shipping_cents === 0 ? "Gratuit" : formatEuros(o.shipping_cents)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}>
+                      <b>Total</b>
                     </td>
                     <td className="num">
                       <b>{formatEuros(o.total_cents)}</b>

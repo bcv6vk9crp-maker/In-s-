@@ -5,20 +5,22 @@ import { useState } from "react";
 import { useCart, type CartLine } from "@/components/CartProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { QuantityInput } from "@/components/QuantityInput";
-import { formatEuros, SIZES, sizeLabel, unitPriceCents, type Prices, type Size } from "@/lib/pricing";
+import { formatEuros, unitPriceCents, type FormatPrice } from "@/lib/pricing";
 
 type PhotoInfo = Pick<CartLine, "photoId" | "slug" | "titleFr" | "titleEn" | "imageUrl">;
 
-export function PurchaseForm({ photo, prices }: { photo: PhotoInfo; prices: Prices }) {
+export function PurchaseForm({ photo, formats }: { photo: PhotoInfo; formats: FormatPrice[] }) {
   const { locale, t } = useI18n();
   const { add } = useCart();
-  const [size, setSize] = useState<Size>("20x30");
+  const [formatId, setFormatId] = useState(formats[0]?.id);
   const [framed, setFramed] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const frameCents = size === "20x30" ? prices.frame_small_cents : prices.frame_large_cents;
-  const total = unitPriceCents(prices, size, framed) * quantity;
+  const format = formats.find((f) => f.id === formatId) ?? formats[0];
+  if (!format) return null;
+
+  const total = unitPriceCents(format, framed) * quantity;
   const reset = () => setAdded(false);
 
   return (
@@ -26,25 +28,25 @@ export function PurchaseForm({ photo, prices }: { photo: PhotoInfo; prices: Pric
       className="purchase"
       onSubmit={(e) => {
         e.preventDefault();
-        add({ ...photo, size, framed, quantity });
+        add({ ...photo, formatId: format.id, formatLabel: format.label, framed, quantity });
         setAdded(true);
       }}
     >
       <div className="option-group">
         <span>{t.photo.format}</span>
         <div className="chips">
-          {SIZES.map((s) => (
+          {formats.map((f) => (
             <button
-              key={s}
+              key={f.id}
               type="button"
               className="chip"
-              aria-pressed={size === s}
+              aria-pressed={format.id === f.id}
               onClick={() => {
-                setSize(s);
+                setFormatId(f.id);
                 reset();
               }}
             >
-              {sizeLabel(s)} · {formatEuros(unitPriceCents(prices, s, false), locale)}
+              {f.label} · {formatEuros(f.price_cents, locale)}
             </button>
           ))}
         </div>
@@ -73,7 +75,7 @@ export function PurchaseForm({ photo, prices }: { photo: PhotoInfo; prices: Pric
               reset();
             }}
           >
-            {t.photo.withFrame} · +{formatEuros(frameCents, locale)}
+            {t.photo.withFrame} · +{formatEuros(format.frame_cents, locale)}
           </button>
         </div>
       </div>

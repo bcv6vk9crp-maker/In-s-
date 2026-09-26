@@ -33,34 +33,34 @@ const browser = await chromium.launch(
 // Images de test : « portraits » 3000 × 4000 px dessinés dans un canvas
 async function makeImages(page) {
   await page.goto("about:blank");
-  const palettes = [
-    ["#f2b24c", "#e27d3f", "#d9a07e", "#c2493b"],
-    ["#2f8a86", "#1e5a63", "#8a5a44", "#f0d7b5"],
-    ["#f3c9c0", "#d98c8f", "#e3b596", "#3d5aa8"],
+  const specs = [
+    { w: 3000, h: 4000, p: ["#f2b24c", "#e27d3f", "#d9a07e", "#c2493b"] },
+    { w: 3000, h: 4000, p: ["#2f8a86", "#1e5a63", "#8a5a44", "#f0d7b5"] },
+    { w: 4000, h: 2667, p: ["#f3c9c0", "#d98c8f", "#e3b596", "#3d5aa8"] }, // paysage
   ];
   const files = [];
-  for (const [i, p] of palettes.entries()) {
-    const b64 = await page.evaluate((p) => {
+  for (const [i, spec] of specs.entries()) {
+    const b64 = await page.evaluate(({ w, h, p }) => {
       const c = document.createElement("canvas");
-      c.width = 3000;
-      c.height = 4000;
+      c.width = w;
+      c.height = h;
       const x = c.getContext("2d");
-      const g = x.createLinearGradient(0, 0, 0, 4000);
+      const g = x.createLinearGradient(0, 0, 0, h);
       g.addColorStop(0, p[0]);
       g.addColorStop(1, p[1]);
       x.fillStyle = g;
-      x.fillRect(0, 0, 3000, 4000);
+      x.fillRect(0, 0, w, h);
       x.fillStyle = p[2];
       x.beginPath();
-      x.ellipse(1500, 1500, 520, 680, 0, 0, Math.PI * 2);
+      x.ellipse(w / 2, h * 0.37, w * 0.17, h * 0.17, 0, 0, Math.PI * 2);
       x.fill();
       x.fillStyle = p[3];
       x.beginPath();
-      x.ellipse(1500, 3700, 1300, 1300, 0, 0, Math.PI * 2);
+      x.ellipse(w / 2, h * 0.92, w * 0.43, h * 0.33, 0, 0, Math.PI * 2);
       x.fill();
       return c.toDataURL("image/jpeg", 0.92).split(",")[1];
-    }, p);
-    files.push({ name: `portrait${i + 1}.jpg`, mimeType: "image/jpeg", buffer: Buffer.from(b64, "base64") });
+    }, spec);
+    files.push({ name: `photo${i + 1}.jpg`, mimeType: "image/jpeg", buffer: Buffer.from(b64, "base64") });
   }
   return files;
 }
@@ -84,18 +84,27 @@ await admin.click("button:has-text('Se connecter')");
 await admin.waitForSelector("text=Bonjour Ines");
 check("AD-03", "connexion avec le bon mot de passe", admin.url().endsWith("/admin"));
 
+/* ---------------- Admin : formats et prix ---------------- */
+await admin.goto(`${BASE}/admin/formats`);
+const defaultFormats = await admin.locator("h2.section-title").allTextContents();
+check("FM-01", "4 formats proposés par défaut", ["20 × 30 cm", "30 × 45 cm", "40 × 60 cm", "60 × 90 cm"].every((l) => defaultFormats.some((t) => t.includes(l))));
+const newForm = admin.locator("form").last();
+await newForm.locator("input[name=label]").fill("10 × 15 cm");
+await newForm.locator("input[name=price]").fill("abc");
+await newForm.locator("input[name=frame]").fill("4");
+await newForm.locator("input[name=shipping]").fill("5");
+await newForm.locator("button").click();
+await admin.waitForSelector("text=Un des montants est invalide.");
+check("FM-02", "un montant invalide est refusé, la saisie est conservée", (await newForm.locator("input[name=label]").inputValue()) === "10 × 15 cm");
+await newForm.locator("input[name=price]").fill("20");
+await newForm.locator("input[name=position]").fill("0");
+await newForm.locator("button").click();
+await admin.waitForSelector("h2:has-text('10 × 15 cm')");
+check("FM-03", "ajout d'un 5ᵉ format (10 × 15 cm à 20 €)", true);
+
 /* ---------------- Admin : réglages ---------------- */
 await admin.goto(`${BASE}/admin/reglages`);
-await admin.fill("#price_small", "abc");
-await admin.click("text=Enregistrer les réglages");
-await admin.waitForSelector(".alert");
-check("RG-02", "un prix invalide est refusé", (await admin.textContent(".alert")).includes("invalide"));
-check("RG-02", "la saisie est conservée après l'erreur", (await admin.inputValue("#price_small")) === "abc");
-
-await admin.fill("#price_small", "35");
-await admin.fill("#price_large", "70");
-await admin.fill("#frame_small", "50");
-await admin.fill("#frame_large", "80");
+await admin.fill("#pickup_location", "Marseille, 6ᵉ arrondissement");
 await admin.fill("#notification_email", "alertes@example.com");
 await admin.fill("#contact_email", "contact@example.com");
 await admin.fill("#instagram", "@ines.b.photo");
@@ -162,6 +171,8 @@ const transforms = await b.evaluate(() =>
   [...document.querySelectorAll(".print-frame")].map((e) => getComputedStyle(e).transform),
 );
 check("GA-04", "les photos sont droites (aucune rotation)", transforms.every((t) => t === "none"), transforms.join(","));
+const landscape = await b.locator(".print:has-text('Les cousines') img").boundingBox();
+check("GA-06", "une photo en paysage garde sa forme réelle dans la galerie", landscape.width > landscape.height * 1.3, `${landscape.width}×${landscape.height}`);
 
 await b.click(".chips a:has-text('Portraits')");
 await b.waitForURL(/collection=portraits/, { waitUntil: "commit" });
@@ -173,12 +184,16 @@ check("GA-03", "la note manuscrite de la collection s'affiche", (await b.textCon
 
 await b.goto(`${BASE}/photos/lea-marseille`);
 await b.waitForSelector(".purchase");
-check("FI-01", "prix par défaut 20 × 30 sans cadre = 35 €", euros(await b.textContent(".total-row")).endsWith("35 €"));
+check("FI-01", "5 formats proposés, du plus petit au plus grand", (await b.locator(".option-group").first().locator("button").allTextContents()).map((t) => t.split(" · ")[0]).join("|") === "10 × 15 cm|20 × 30 cm|30 × 45 cm|40 × 60 cm|60 × 90 cm");
+check("FI-01", "format sélectionné par défaut : le premier (10 × 15 cm, 20 €)", euros(await b.textContent(".total-row")).endsWith("20 €"));
 await b.click("button:has-text('20 × 30 cm')");
+check("FI-02", "20 × 30 sans cadre = 35 €", euros(await b.textContent(".total-row")).endsWith("35 €"));
 await b.click("button:has-text('Avec cadre')");
-check("FI-02", "20 × 30 avec cadre = 85 €", euros(await b.textContent(".total-row")).endsWith("85 €"));
+check("FI-02", "20 × 30 avec cadre = 41 € (+6)", euros(await b.textContent(".total-row")).endsWith("41 €"));
+await b.click("button:has-text('60 × 90 cm')");
+check("FI-02", "60 × 90 avec cadre = 132 € (+12)", euros(await b.textContent(".total-row")).endsWith("132 €"));
 await b.click("button:has-text('40 × 60 cm')");
-check("FI-02", "40 × 60 avec cadre = 150 €", euros(await b.textContent(".total-row")).endsWith("150 €"));
+check("FI-02", "40 × 60 avec cadre = 80 € (+10)", euros(await b.textContent(".total-row")).endsWith("80 €"));
 for (let i = 0; i < 12; i++) {
   const plus = b.locator(".qty button[aria-label='+1']");
   if (await plus.isDisabled()) break;
@@ -198,16 +213,21 @@ await addToCart(b);
 check("PA-01", "ajouter deux fois la même configuration additionne les quantités", (await b.textContent(".cart-count")) === "4");
 
 await b.goto(`${BASE}/photos/samir-au-port`);
+await b.waitForLoadState("networkidle");
+await b.click("button:has-text('20 × 30 cm')");
 await addToCart(b);
 await b.goto(`${BASE}/photos/les-cousines`);
+await b.waitForLoadState("networkidle");
+await b.click("button:has-text('20 × 30 cm')");
 await addToCart(b);
 
 await b.goto(`${BASE}/panier`);
 await b.waitForSelector(".cart-line");
 check("PA-02", "le panier contient 3 lignes", (await b.locator(".cart-line").count()) === 3);
-check("PA-02", "total estimé = 4 × 150 + 35 + 35 = 670 €", euros(await b.textContent(".summary .total-row")).endsWith("670 €"));
+check("PA-02", "tirages = 4 × 80 + 35 + 35 = 390 €", euros(await b.textContent(".summary .total-row")).endsWith("390 €"));
+check("PO-01", "le panier annonce le port du plus grand format (12 €) et la gratuité en retrait", euros(await b.textContent(".summary")).includes("12 €") && (await b.textContent(".summary")).includes("Retrait en main propre gratuit"));
 await b.locator(".cart-line").nth(0).locator(".qty button[aria-label='−1']").click();
-check("PA-03", "diminuer une quantité met à jour le total (520 €)", euros(await b.textContent(".summary .total-row")).endsWith("520 €"));
+check("PA-03", "diminuer une quantité met à jour le total (310 €)", euros(await b.textContent(".summary .total-row")).endsWith("310 €"));
 await b.locator(".cart-line").nth(2).locator("button:has-text('Retirer')").click();
 check("PA-04", "retirer une ligne", (await b.locator(".cart-line").count()) === 2);
 await b.reload();
@@ -226,6 +246,8 @@ await b.waitForSelector("h1:has-text('À propos')");
 /* ---------------- Commande ---------------- */
 await b.goto(`${BASE}/commande`);
 await b.waitForSelector("#firstName");
+check("RT-01", "en retrait, le lieu de retrait est affiché", (await b.textContent("form")).includes("Marseille, 6ᵉ arrondissement"));
+check("PO-02", "en retrait, port gratuit : total = 275 €", (await b.textContent(".summary")).includes("Gratuit") && euros(await b.textContent(".summary .total-row")).endsWith("275 €"));
 await b.fill("#firstName", "Léa");
 await b.fill("#lastName", "Martin");
 await b.fill("#email", "lea@example.com");
@@ -233,6 +255,7 @@ await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForTimeout(500);
 check("CM-02", "sans consentement, la commande n'est pas envoyée", b.url().endsWith("/commande"));
 await b.click("button:has-text('Livraison à domicile')");
+check("PO-03", "en livraison, port de 12 € ajouté : total = 287 €", euros(await b.textContent(".summary .total-row")).endsWith("287 €"));
 await b.check("#consent");
 await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForTimeout(500);
@@ -247,10 +270,13 @@ await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForURL(/\/commande\/merci\?n=IB-/, { waitUntil: "commit" });
 await b.waitForSelector("text=Merci");
 check("CM-01", "commande en livraison envoyée, numéro affiché", (await b.textContent("main")).includes("IB-0001"));
+check("CM-09", "la page de remerciement dit « transmise à la photographe » sans promettre d'email", (await b.textContent("main")).includes("transmise à la photographe") && !(await b.textContent("main")).includes("récapitulatif"));
 check("CM-06", "le panier est vidé après envoi", (await b.locator(".cart-count").count()) === 0);
 
 // Retrait en main propre, sans adresse
 await b.goto(`${BASE}/photos/samir-au-port`);
+await b.waitForLoadState("networkidle");
+await b.click("button:has-text('20 × 30 cm')");
 await addToCart(b);
 await b.goto(`${BASE}/commande`);
 await b.fill("#firstName", "Tom");
@@ -296,6 +322,23 @@ for (let n = 0; n < 3; n++) {
 }
 check("CM-07", "la 4ᵉ commande en 15 min avec le même email est bloquée", (await b.textContent(".alert")).includes("Plusieurs commandes"));
 
+// Format retiré par Ines pendant qu'il est dans un panier
+await b.goto(`${BASE}/photos/lea-marseille`);
+await b.waitForLoadState("networkidle");
+await b.click("button:has-text('10 × 15 cm')");
+await addToCart(b);
+await admin.goto(`${BASE}/admin/formats`);
+const smallForm = admin.locator("section:has(h2:has-text('10 × 15 cm')) form");
+await smallForm.locator("input[name=active]").uncheck();
+await smallForm.locator("button:has-text('Enregistrer')").click();
+await admin.waitForSelector("text=Format enregistré.");
+await b.goto(`${BASE}/panier`);
+await b.waitForSelector(".alert");
+check("FM-04", "un format désactivé est retiré du panier avec un message", (await b.textContent(".alert")).includes("n'est plus proposé"));
+await b.goto(`${BASE}/photos/lea-marseille`);
+await b.waitForSelector(".purchase");
+check("FM-05", "un format désactivé n'est plus proposé sur les fiches", !(await b.textContent(".purchase")).includes("10 × 15 cm"));
+
 /* ---------------- Admin : suivi des commandes ---------------- */
 await admin.goto(`${BASE}/admin`);
 check("TB-01", "le tableau de bord compte les nouvelles commandes", (await admin.textContent(".stat b")) === "4");
@@ -306,6 +349,7 @@ await admin.click("a:has-text('IB-0001')");
 await admin.waitForSelector("text=Tirages demandés");
 const detail = await admin.textContent("main");
 check("CD-01", "le détail montre adresse, téléphone et message", detail.includes("12 rue du Panier") && detail.includes("+33 6") && detail.includes("Cadre noir"));
+check("PO-04", "le détail montre le format, le port (12 €) et le total (287 €)", detail.includes("40 × 60 cm") && euros(detail).includes("12 €") && euros(detail).includes("287 €"));
 await admin.selectOption("#status", "payee");
 await admin.fill("#internal_notes", "Port : 8 € convenus. Payé par virement.");
 await admin.click("button:has-text('Enregistrer')");
@@ -318,7 +362,7 @@ check("CD-03", "le filtre par statut fonctionne", (await admin.locator("tbody tr
 
 const csv = await admin.request.get(`${BASE}/admin/export`);
 const csvText = await csv.text();
-check("EX-01", "export CSV téléchargé", csv.status() === 200 && csvText.includes("IB-0001"));
+check("EX-01", "export CSV téléchargé, avec le port", csv.status() === 200 && csvText.includes("IB-0001") && csvText.includes("Port (€)") && csvText.includes(";12,00;287,00;"));
 check("EX-02", "les formules Excel sont neutralisées", csvText.includes("'=Cadre noir") && csvText.includes("'+33 6"));
 const anonCsv = await b.request.get(`${BASE}/admin/export`);
 check("SE-01", "export refusé sans session admin", anonCsv.status() === 401);
@@ -360,6 +404,59 @@ await admin.click("button:has-text('Se déconnecter')");
 await admin.waitForURL(`${BASE}/admin/connexion`, { waitUntil: "commit" });
 await admin.goto(`${BASE}/admin/commandes`);
 check("AD-04", "après déconnexion, l'admin est de nouveau protégé", admin.url().endsWith("/admin/connexion"));
+
+/* ---------------- Mot de passe oublié ---------------- */
+const MAILPIT = process.env.E2E_MAILPIT_URL ?? "http://127.0.0.1:54324";
+await admin.request.delete(`${MAILPIT}/api/v1/messages`);
+await admin.click("text=Mot de passe oublié ?");
+await admin.waitForSelector("text=Recevoir un lien");
+await admin.fill("#email", "inconnu@example.com");
+await admin.click("button:has-text('Recevoir un lien')");
+await admin.waitForSelector(".alert-ok");
+const neutral = await admin.textContent(".alert-ok");
+await admin.fill("#email", ADMIN_EMAIL);
+await admin.click("button:has-text('Recevoir un lien')");
+await admin.waitForTimeout(1500);
+check("MP-01", "même message pour une adresse inconnue et pour l'admin", neutral === (await admin.textContent(".alert-ok")));
+let resetLink = null;
+for (let i = 0; i < 10 && !resetLink; i++) {
+  const list = await (await admin.request.get(`${MAILPIT}/api/v1/messages`)).json();
+  const msg = list.messages?.find((m) => m.To?.some((t) => t.Address === ADMIN_EMAIL));
+  if (msg) {
+    const full = await (await admin.request.get(`${MAILPIT}/api/v1/message/${msg.ID}`)).json();
+    resetLink = (full.Text.match(/https?:\/\/\S+verify\S+/) ?? [])[0] ?? null;
+  }
+  if (!resetLink) await admin.waitForTimeout(500);
+}
+const others = await (await admin.request.get(`${MAILPIT}/api/v1/messages`)).json();
+check("MP-02", "l'email de réinitialisation part vers l'admin, et vers personne d'autre", !!resetLink && others.messages.length === 1);
+if (resetLink) {
+  await admin.goto(resetLink.replace(/&amp;/g, "&"));
+  await admin.waitForSelector("text=Choisissez votre nouveau mot de passe");
+  check("MP-03", "le lien mène au choix du nouveau mot de passe", admin.url().endsWith("/admin/nouveau-mot-de-passe"));
+  await admin.fill("#password", "court");
+  await admin.fill("#confirm", "court");
+  await admin.evaluate(() => document.querySelectorAll("input").forEach((i) => i.removeAttribute("minlength")));
+  await admin.click("button:has-text('Enregistrer le mot de passe')");
+  await admin.waitForSelector(".alert");
+  check("MP-04", "un mot de passe trop court est refusé", (await admin.textContent(".alert")).includes("10 caractères"));
+  const NEW_PASSWORD = "Nouveau-Mot-De-Passe-2";
+  await admin.fill("#password", NEW_PASSWORD);
+  await admin.fill("#confirm", NEW_PASSWORD);
+  await admin.click("button:has-text('Enregistrer le mot de passe')");
+  await admin.waitForSelector("text=Votre mot de passe a été modifié.");
+  await admin.click("button:has-text('Se déconnecter')");
+  await admin.waitForURL(`${BASE}/admin/connexion`, { waitUntil: "commit" });
+  await admin.fill("#email", ADMIN_EMAIL);
+  await admin.fill("#password", NEW_PASSWORD);
+  await admin.click("button:has-text('Se connecter')");
+  await admin.waitForSelector("text=Bonjour Ines");
+  check("MP-05", "connexion avec le nouveau mot de passe", true);
+}
+const expired = await (await browser.newContext()).newPage();
+await expired.goto(`${BASE}/admin/auth/callback?code=faux`);
+await expired.waitForSelector("text=Ce lien a expiré");
+check("MP-06", "un lien invalide ou expiré mène à un message clair", expired.url().includes("lien=expire"));
 
 await browser.close();
 console.log(failures === 0 ? "\nRecette OK" : `\n${failures} vérification(s) en échec`);

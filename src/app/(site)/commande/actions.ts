@@ -1,14 +1,29 @@
 "use server";
 
-import { getSettings, getVisiblePhotosByIds } from "@/lib/data";
+import { getFormats, getSettings, getVisiblePhotosByIds } from "@/lib/data";
 import { sendOrderEmails } from "@/lib/email";
 import { mergeCartItems, orderSchema } from "@/lib/order-schema";
-import { formatOrderNumber, unitPriceCents } from "@/lib/pricing";
+import { formatOrderNumber, shippingCents, unitPriceCents } from "@/lib/pricing";
 import { db } from "@/lib/supabase/db";
 
 type Result =
   | { ok: true; number: string }
-  | { ok: false; reason: "fields" | "unavailable" | "tooMany" | "server"; fields: string[]; unavailable: string[] };
+  | {
+      ok: false;
+      reason: "fields" | "unavailable" | "tooMany" | "server";
+      fields: string[];
+      unavailable: string[];
+      unavailableFormats: string[];
+    };
+
+const failure = (reason: "fields" | "unavailable" | "tooMany" | "server", extra: Partial<Result> = {}): Result => ({
+  ok: false,
+  reason,
+  fields: [],
+  unavailable: [],
+  unavailableFormats: [],
+  ...extra,
+} as Result);
 
 // Au-delà, on suppose un robot ou une erreur de manipulation (et on évite d'envoyer des emails en masse).
 const MAX_ORDERS_PER_EMAIL = 3;
@@ -19,7 +34,7 @@ export async function placeOrder(input: unknown): Promise<Result> {
     return await createOrder(input);
   } catch (e) {
     console.error("Commande impossible", e);
-    return { ok: false, reason: "server", fields: [], unavailable: [] };
+    return failure("server");
   }
 }
 
@@ -32,7 +47,7 @@ async function createOrder(input: unknown): Promise<Result> {
   const parsed = orderSchema.safeParse(input);
   if (!parsed.success) {
     const fields = [...new Set(parsed.error.issues.map((i) => String(i.path[0])))];
-    return { ok: false, reason: "fields", fields, unavailable: [] };
+    return failure("fields", { fields });
   }
   const order = parsed.data;
 
@@ -43,28 +58,42 @@ async function createOrder(input: unknown): Promise<Result> {
     .ilike("email", order.email.replace(/[\\%_]/g, "\\$&"))
     .gte("created_at", since);
   if ((count ?? 0) >= MAX_ORDERS_PER_EMAIL) {
-    return { ok: false, reason: "tooMany", fields: [], unavailable: [] };
+    return failure("tooMany");
   }
   const items = mergeCartItems(order.items);
 
   const ids = [...new Set(items.map((i) => i.photoId))];
-  const [photos, settings] = await Promise.all([getVisiblePhotosByIds(ids), getSettings()]);
+  const [photos, formats, settings] = await Promise.all([
+    getVisiblePhotosByIds(ids),
+    getFormats({ onlyActive: true }),
+    getSettings(),
+  ]);
   const byId = new Map(photos.map((p) => [p.id, p]));
+  const formatById = new Map(formats.map((f) => [f.id, f]));
   const unavailable = ids.filter((id) => !byId.has(id));
-  if (unavailable.length > 0) return { ok: false, reason: "unavailable", fields: [], unavailable };
+  const unavailableFormats = [...new Set(items.map((i) => i.formatId))].filter((id) => !formatById.has(id));
+  if (unavailable.length > 0 || unavailableFormats.length > 0) {
+    return failure("unavailable", { unavailable, unavailableFormats });
+  }
 
   const lines = items.map((item) => {
     const photo = byId.get(item.photoId)!;
+    const format = formatById.get(item.formatId)!;
     return {
       photo_id: photo.id,
       photo_title: photo.title_fr,
-      size: item.size,
+      format_id: format.id,
+      format_label: format.label,
       framed: item.framed,
-      unit_price_cents: unitPriceCents(settings, item.size, item.framed),
+      unit_price_cents: unitPriceCents(format, item.framed),
       quantity: item.quantity,
     };
   });
-  const total = lines.reduce((sum, l) => sum + l.unit_price_cents * l.quantity, 0);
+  const shippingCost = shippingCents(
+    items.map((i) => formatById.get(i.formatId)!),
+    order.deliveryMethod,
+  );
+  const total = lines.reduce((sum, l) => sum + l.unit_price_cents * l.quantity, 0) + shippingCost;
   const shipping = order.deliveryMethod === "livraison";
 
   const { data: created, error } = await db()
@@ -82,6 +111,7 @@ async function createOrder(input: unknown): Promise<Result> {
       message: order.message,
       locale: order.locale,
       consent_at: new Date().toISOString(),
+      shipping_cents: shippingCost,
       total_cents: total,
     })
     .select("id, number, created_at")
@@ -103,6 +133,7 @@ async function createOrder(input: unknown): Promise<Result> {
       number,
       order,
       lines,
+      shipping: shippingCost,
       total,
       settings,
     });

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { mergeCartItems, orderSchema } from "@/lib/order-schema";
 
 const photoId = "3f2b8c1e-5a4d-4c7e-9b1a-2d3e4f5a6b7c";
+const formatId = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+const otherFormat = "1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e";
 const base = {
   firstName: "Léa",
   lastName: "Martin",
@@ -15,7 +17,7 @@ const base = {
   message: "",
   consent: true,
   locale: "fr",
-  items: [{ photoId, size: "20x30", framed: false, quantity: 1 }],
+  items: [{ photoId, formatId, framed: false, quantity: 1 }],
 };
 
 describe("orderSchema", () => {
@@ -42,21 +44,23 @@ describe("orderSchema", () => {
     expect(orderSchema.safeParse({ ...base, items: [] }).success).toBe(false);
   });
 
-  it("refuse un format inconnu", () => {
-    expect(orderSchema.safeParse({ ...base, items: [{ ...base.items[0], size: "30x40" }] }).success).toBe(false);
+  it("refuse un identifiant de format invalide", () => {
+    expect(orderSchema.safeParse({ ...base, items: [{ ...base.items[0], formatId: "30x40" }] }).success).toBe(false);
   });
 });
 
 describe("mergeCartItems", () => {
   it("regroupe les lignes identiques en plafonnant à 10", () => {
     const merged = mergeCartItems([
-      { photoId, size: "20x30", framed: false, quantity: 6 },
-      { photoId, size: "20x30", framed: false, quantity: 7 },
-      { photoId, size: "20x30", framed: true, quantity: 1 },
+      { photoId, formatId, framed: false, quantity: 6 },
+      { photoId, formatId, framed: false, quantity: 7 },
+      { photoId, formatId, framed: true, quantity: 1 },
+      { photoId, formatId: otherFormat, framed: false, quantity: 2 },
     ]);
     expect(merged).toEqual([
-      { photoId, size: "20x30", framed: false, quantity: 10 },
-      { photoId, size: "20x30", framed: true, quantity: 1 },
+      { photoId, formatId, framed: false, quantity: 10 },
+      { photoId, formatId, framed: true, quantity: 1 },
+      { photoId, formatId: otherFormat, framed: false, quantity: 2 },
     ]);
   });
 });

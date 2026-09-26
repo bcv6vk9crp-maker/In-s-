@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCollections, getPhotos, getSettings } from "@/lib/data";
+import { getCollections, getFormats, getPhotos } from "@/lib/data";
 import { getDictionary } from "@/lib/locale";
 import { pick } from "@/lib/i18n";
 import { formatEuros } from "@/lib/pricing";
@@ -9,15 +9,15 @@ export const dynamic = "force-dynamic";
 export default async function HomePage(props: PageProps<"/">) {
   const { collection } = await props.searchParams;
   const { locale, t } = await getDictionary();
-  const [collections, photos, settings] = await Promise.all([
+  const [collections, photos, formats] = await Promise.all([
     getCollections({ onlyVisible: true }),
     getPhotos({ onlyVisible: true }),
-    getSettings(),
+    getFormats({ onlyActive: true }),
   ]);
 
   const active = collections.find((c) => c.slug === collection) ?? null;
   const shown = active ? photos.filter((p) => p.collection_ids.includes(active.id)) : photos;
-  const fromPrice = formatEuros(Math.min(settings.price_small_cents, settings.price_large_cents), locale);
+  const fromPrice = formats.length > 0 ? formatEuros(Math.min(...formats.map((f) => f.price_cents)), locale) : null;
 
   return (
     <>
@@ -60,9 +60,11 @@ export default async function HomePage(props: PageProps<"/">) {
                 </div>
                 <div className="print-caption">
                   <b>{title}</b>
-                  <span>
-                    {t.home.from} {fromPrice}
-                  </span>
+                  {fromPrice && (
+                    <span>
+                      {t.home.from} {fromPrice}
+                    </span>
+                  )}
                 </div>
               </Link>
             );
