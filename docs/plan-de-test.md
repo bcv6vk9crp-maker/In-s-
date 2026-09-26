@@ -2,7 +2,7 @@
 
 Ce document décrit ce que l'application doit permettre et comment le vérifier avant la mise en ligne. Il commence par les décisions prises avec Ines et par les questions encore ouvertes.
 
-- **Tests automatiques** : `npm test` (règles de calcul, 18 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 76 vérifications, voir `e2e/parcours.mjs`).
+- **Tests automatiques** : `npm test` (règles de calcul, 20 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 83 vérifications, voir `e2e/parcours.mjs`).
 - **Tests manuels** : ceux qu'un robot ne peut pas faire (vrais emails, vrais téléphones, vraies photos d'Ines). Ils sont marqués **Manuel** ci-dessous.
 
 ---
@@ -19,6 +19,7 @@ Ce document décrit ce que l'application doit permettre et comment le vérifier 
 | Factures | Ines les fait en dehors du site. Coordonnées des acheteurs effacées au bout d'un an |
 | Nom de domaine | Lancement sans domaine. La page de remerciement dit « commande transmise à la photographe », sans promettre d'email. **Condition** : le compte Resend doit être créé avec l'adresse qui reçoit les commandes |
 | Mot de passe | Lien « mot de passe oublié » sur la page de connexion |
+| Formulaire de commande | Prénom, nom, email, téléphone et adresse postale obligatoires, **y compris en retrait**. Case d'accord obligatoire. Seul le message est facultatif |
 | Retrait | Lieu de retrait réglé dans l'admin, affiché à l'acheteur |
 | Contenus | Ines saisit elle-même ses emails, son Instagram, ses collections et ses photos dans l'admin |
 
@@ -66,7 +67,7 @@ Le prototype cliquable de validation des cas d'usage reprend toutes ces question
 | UC-A2 | Ouvrir la fiche d'une photo, choisir un format parmi ceux proposés, le cadre et la quantité, voir le prix |
 | UC-A3 | Gérer son panier : même photo ou photos différentes, quantités, retrait d'une ligne, port annoncé |
 | UC-A4 | Passer le site en anglais |
-| UC-A5 | Valider son panier : coordonnées, retrait (lieu affiché, gratuit) ou livraison (adresse, port), message, consentement |
+| UC-A5 | Valider son panier : prénom, nom, email, téléphone et adresse postale **obligatoires**, retrait (lieu affiché, gratuit) ou livraison (port), message facultatif, case d'accord obligatoire |
 | UC-A6 | Voir la confirmation « commande transmise à la photographe », puis être recontacté par Ines |
 | UC-A7 | Consulter À propos, Contact et les pages légales |
 | UC-A8 | Demander la suppression de ses données (par email à Ines) |
@@ -170,9 +171,11 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 | ID | Cas | Résultat attendu | Type | Statut |
 |---|---|---|---|---|
 | CM-01 | Commande avec livraison | Page de remerciement avec numéro IB-0001 | Auto | ✅ |
-| CM-02 | Sans cocher le consentement | Commande non envoyée | Auto + Unit | ✅ |
-| CM-03 | Livraison sans adresse | Commande non envoyée, pays prérempli | Auto + Unit | ✅ |
-| CM-04 | Retrait en main propre sans adresse | Commande acceptée | Auto | ✅ |
+| CM-02 | Sans cocher la case d'accord | Commande non envoyée | Auto + Unit | ✅ |
+| CM-03 | Pays de l'adresse | Prérempli (France) | Auto | ✅ |
+| CM-11 | Prénom, nom, email, téléphone, adresse, code postal ou ville vide (même en retrait) | Commande non envoyée | Auto + Unit | ✅ |
+| CM-12 | Téléphone de moins de 6 chiffres ou adresse vide, garde-fous du navigateur contournés | Refus par le serveur, champs signalés en rouge | Auto + Unit | ✅ |
+| CM-04 | Retrait en main propre | Commande acceptée, port gratuit | Auto | ✅ |
 | CM-05 | Photo masquée entre l'ajout au panier et la validation | Photo retirée du panier, message explicite | Auto | ✅ |
 | CM-06 | Après l'envoi | Panier vidé | Auto | ✅ |
 | CM-07 | 4ᵉ commande en 15 min avec le même email (majuscules ou minuscules) | Commande bloquée avec un message | Auto | ✅ |

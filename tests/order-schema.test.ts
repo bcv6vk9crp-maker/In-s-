@@ -8,12 +8,12 @@ const base = {
   firstName: "Léa",
   lastName: "Martin",
   email: "lea@example.com",
-  phone: "",
+  phone: "06 12 34 56 78",
   deliveryMethod: "retrait",
-  addressLine: "",
-  postalCode: "",
-  city: "",
-  country: "",
+  addressLine: "12 rue du Panier",
+  postalCode: "13002",
+  city: "Marseille",
+  country: "France",
   message: "",
   consent: true,
   locale: "fr",
@@ -21,18 +21,31 @@ const base = {
 };
 
 describe("orderSchema", () => {
-  it("accepte un retrait sans adresse", () => {
-    const r = orderSchema.safeParse(base);
-    expect(r.success).toBe(true);
-    if (r.success) expect(r.data.phone).toBeNull();
+  it("accepte une commande complète", () => {
+    expect(orderSchema.safeParse(base).success).toBe(true);
   });
 
-  it("exige l'adresse complète pour une livraison", () => {
-    const r = orderSchema.safeParse({ ...base, deliveryMethod: "livraison", addressLine: "1 rue du Port" });
+  it("exige le téléphone (au moins 6 chiffres)", () => {
+    for (const phone of ["", "   ", "12345", "abcdefgh"]) {
+      const r = orderSchema.safeParse({ ...base, phone });
+      expect(r.success).toBe(false);
+      if (!r.success) expect(r.error.issues.map((i) => i.path[0])).toEqual(["phone"]);
+    }
+    expect(orderSchema.safeParse({ ...base, phone: "+33 6 12 34 56 78" }).success).toBe(true);
+  });
+
+  it("exige l'adresse complète, même en retrait", () => {
+    const r = orderSchema.safeParse({ ...base, addressLine: "", postalCode: " ", city: "", country: "" });
     expect(r.success).toBe(false);
     if (!r.success) {
-      expect(r.error.issues.map((i) => i.path[0]).sort()).toEqual(["city", "country", "postalCode"]);
+      expect(r.error.issues.map((i) => i.path[0]).sort()).toEqual(["addressLine", "city", "country", "postalCode"]);
     }
+  });
+
+  it("exige prénom, nom et un email valide", () => {
+    expect(orderSchema.safeParse({ ...base, firstName: "" }).success).toBe(false);
+    expect(orderSchema.safeParse({ ...base, lastName: " " }).success).toBe(false);
+    expect(orderSchema.safeParse({ ...base, email: "pas-un-email" }).success).toBe(false);
   });
 
   it("refuse une commande sans consentement", () => {

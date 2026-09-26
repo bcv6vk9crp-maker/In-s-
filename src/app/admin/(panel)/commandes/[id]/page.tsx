@@ -140,9 +140,11 @@ export default async function OrderPage(props: PageProps<"/admin/commandes/[id]"
                 <dd>{o.phone ? <a href={`tel:${o.phone}`}>{o.phone}</a> : "—"}</dd>
                 <dt>Réception</dt>
                 <dd>
-                  {o.delivery_method === "retrait"
-                    ? "Retrait en main propre"
-                    : `Livraison\n${o.address_line}\n${o.postal_code} ${o.city}\n${o.country}`}
+                  {o.delivery_method === "retrait" ? "Retrait en main propre" : "Livraison"}
+                </dd>
+                <dt>Adresse</dt>
+                <dd>
+                  {o.address_line ? `${o.address_line}\n${o.postal_code} ${o.city}\n${o.country}` : "—"}
                 </dd>
                 <dt>Langue</dt>
                 <dd>{o.locale === "en" ? "Anglais" : "Français"}</dd>

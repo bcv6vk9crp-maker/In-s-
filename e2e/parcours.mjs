@@ -37,6 +37,18 @@ async function addToCart(page) {
   await page.click("button:has-text('Ajouter au panier')");
   await page.waitForSelector("text=Ajouté au panier");
 }
+// Remplit les champs obligatoires de la commande (hors case de consentement).
+async function fillBuyer(page, first, last, email) {
+  await page.fill("#firstName", first);
+  await page.fill("#lastName", last);
+  await page.fill("#email", email);
+  await page.fill("#phone", "06 98 76 54 32");
+  await page.fill("#addressLine", "3 place de Lenche");
+  await page.fill("#postalCode", "13002");
+  await page.fill("#city", "Marseille");
+}
+// Retire la validation du navigateur pour vérifier que le serveur refuse aussi.
+const stripBrowserChecks = (page) => page.evaluate(() => document.querySelectorAll("#main-order-form [required], form [required]").forEach((el) => el.removeAttribute("required")));
 const euros = (s) => (s ?? "").replace(/\s/g, " ").trim();
 
 const browser = await chromium.launch(
@@ -264,20 +276,36 @@ check("PO-02", "en retrait, port gratuit : total = 275 €", (await b.textConten
 await b.fill("#firstName", "Léa");
 await b.fill("#lastName", "Martin");
 await b.fill("#email", "lea@example.com");
-await b.click("button:has-text('Envoyer ma commande')");
-await b.waitForTimeout(500);
-check("CM-02", "sans consentement, la commande n'est pas envoyée", b.url().endsWith("/commande"));
-await b.click("button:has-text('Livraison à domicile')");
-check("PO-03", "en livraison, port de 12 € ajouté : total = 287 €", euros(await b.textContent(".summary .total-row")).endsWith("287 €"));
-await b.check("#consent");
-await b.click("button:has-text('Envoyer ma commande')");
-await b.waitForTimeout(500);
-check("CM-03", "en livraison, l'adresse est obligatoire", b.url().endsWith("/commande"));
 check("CM-03", "le pays est prérempli (France)", (await b.inputValue("#country")) === "France");
+const sent = () => b.url().includes("/merci");
+await b.fill("#phone", "+33 6 12 34 56 78");
 await b.fill("#addressLine", "12 rue du Panier");
 await b.fill("#postalCode", "13002");
 await b.fill("#city", "Marseille");
+await b.click("button:has-text('Envoyer ma commande')");
+await b.waitForTimeout(500);
+check("CM-02", "sans la case d'accord, la commande n'est pas envoyée", !sent());
+await b.check("#consent");
+for (const [id, label] of [["#firstName", "prénom"], ["#lastName", "nom"], ["#email", "email"], ["#phone", "téléphone"], ["#addressLine", "adresse"], ["#postalCode", "code postal"], ["#city", "ville"]]) {
+  const kept = await b.inputValue(id);
+  await b.fill(id, "");
+  await b.click("button:has-text('Envoyer ma commande')");
+  await b.waitForTimeout(300);
+  check("CM-11", `sans ${label}, la commande n'est pas envoyée (même en retrait)`, !sent());
+  await b.fill(id, kept);
+}
+// Contrôle côté serveur : sans les garde-fous du navigateur, un téléphone trop court et une adresse vide sont refusés
+await stripBrowserChecks(b);
+await b.fill("#phone", "12345");
+await b.fill("#addressLine", "");
+await b.click("button:has-text('Envoyer ma commande')");
+await b.waitForSelector(".alert");
+const flagged = await b.evaluate(() => [...document.querySelectorAll("[data-invalid=true] input")].map((i) => i.id).sort().join(","));
+check("CM-12", "le serveur refuse un téléphone de moins de 6 chiffres et une adresse vide, champs signalés", !sent() && flagged === "addressLine,phone", flagged);
 await b.fill("#phone", "+33 6 12 34 56 78");
+await b.fill("#addressLine", "12 rue du Panier");
+await b.click("button:has-text('Livraison à domicile')");
+check("PO-03", "en livraison, port de 12 € ajouté : total = 287 €", euros(await b.textContent(".summary .total-row")).endsWith("287 €"));
 await b.fill("#message", "=Cadre noir si possible");
 await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForURL(/\/commande\/merci\?n=IB-/, { waitUntil: "commit" });
@@ -286,19 +314,17 @@ check("CM-01", "commande en livraison envoyée, numéro affiché", (await b.text
 check("CM-09", "la page de remerciement dit « transmise à la photographe » sans promettre d'email", (await b.textContent("main")).includes("transmise à la photographe") && !(await b.textContent("main")).includes("récapitulatif"));
 check("CM-06", "le panier est vidé après envoi", (await b.locator(".cart-count").count()) === 0);
 
-// Retrait en main propre, sans adresse
+// Retrait en main propre
 await b.goto(`${BASE}/photos/samir-au-port`);
 await b.waitForLoadState("networkidle");
 await b.click("button:has-text('20 × 30 cm')");
 await addToCart(b);
 await b.goto(`${BASE}/commande`);
-await b.fill("#firstName", "Tom");
-await b.fill("#lastName", "Durand");
-await b.fill("#email", "tom@example.com");
+await fillBuyer(b, "Tom", "Durand", "tom@example.com");
 await b.check("#consent");
 await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForURL(/IB-0002/, { waitUntil: "commit" });
-check("CM-04", "commande en retrait sans adresse", true);
+check("CM-04", "commande en retrait acceptée (port gratuit)", true);
 
 // Photo retirée du site pendant qu'elle est dans un panier
 await b.goto(`${BASE}/photos/les-cousines`);
@@ -311,9 +337,7 @@ await admin.click("button:has-text('Enregistrer')");
 await admin.waitForURL(`${BASE}/admin/photos`, { waitUntil: "commit" });
 await admin.waitForSelector("text=Masquée");
 await b.goto(`${BASE}/commande`);
-await b.fill("#firstName", "Tom");
-await b.fill("#lastName", "Durand");
-await b.fill("#email", "tom@example.com");
+await fillBuyer(b, "Tom", "Durand", "tom@example.com");
 await b.check("#consent");
 await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForSelector(".alert");
@@ -326,9 +350,7 @@ for (let n = 0; n < 3; n++) {
   await b.goto(`${BASE}/photos/samir-au-port`);
   await addToCart(b);
   await b.goto(`${BASE}/commande`);
-  await b.fill("#firstName", "Tom");
-  await b.fill("#lastName", "Durand");
-  await b.fill("#email", "TOM@example.com");
+  await fillBuyer(b, "Tom", "Durand", "TOM@example.com");
   await b.check("#consent");
   await b.click("button:has-text('Envoyer ma commande')");
   await b.waitForTimeout(800);
@@ -339,9 +361,7 @@ check("CM-07", "la 4ᵉ commande en 15 min avec le même email est bloquée", (a
 await b.goto(`${BASE}/photos/samir-au-port`);
 await addToCart(b);
 await b.goto(`${BASE}/commande`);
-await b.fill("#firstName", "Robot");
-await b.fill("#lastName", "Spam");
-await b.fill("#email", "robot@example.com");
+await fillBuyer(b, "Robot", "Spam", "robot@example.com");
 await b.check("#consent");
 await b.evaluate(() => { document.querySelector("input[name=website]").value = "http://spam.example"; });
 await b.click("button:has-text('Envoyer ma commande')");

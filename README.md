@@ -11,7 +11,7 @@ Il n'y a **aucun paiement en ligne**. L'acheteur remplit son panier et envoie se
 - fiche de chaque photo : choix du format (4 par défaut, du 20 × 30 au 60 × 90), option cadre, quantité de 1 à 10 ;
 - galerie où chaque vignette garde la forme réelle de sa photo (portrait ou paysage) ;
 - panier conservé dans le navigateur, sans création de compte ;
-- formulaire de commande : prénom, nom, email, téléphone (facultatif), retrait (lieu affiché, gratuit) ou livraison (adresse obligatoire, forfait de port), message, consentement RGPD ;
+- formulaire de commande : prénom, nom, email, téléphone et adresse postale obligatoires, retrait (lieu affiché, gratuit) ou livraison (forfait de port), message facultatif, case d'accord obligatoire pour transmettre les informations à la photographe ;
 - email d'alerte à Ines. Un récapitulatif part aussi vers l'acheteur, mais seulement une fois un nom de domaine vérifié (voir Resend) : la page de remerciement ne le promet donc pas ;
 - pages À propos, Contact, Mentions légales, Conditions de vente et Confidentialité.
 

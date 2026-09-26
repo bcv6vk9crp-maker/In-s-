@@ -115,7 +115,7 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
             </label>
             <label className="field" data-invalid={bad("phone")}>
               <span>{t.checkout.phone}</span>
-              <input id="phone" name="phone" type="tel" autoComplete="tel" maxLength={40} />
+              <input id="phone" name="phone" type="tel" required autoComplete="tel" maxLength={40} />
             </label>
           </div>
 
@@ -141,35 +141,35 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
                   : t.checkout.pickupToAgree}
               </p>
             )}
-            {delivery === "livraison" && (
-              <>
-                <label className="field" data-invalid={bad("addressLine")}>
-                  <span>{t.checkout.address}</span>
-                  <input id="addressLine" name="addressLine" required autoComplete="street-address" maxLength={200} />
-                </label>
-                <div className="field-row">
-                  <label className="field" data-invalid={bad("postalCode")}>
-                    <span>{t.checkout.postalCode}</span>
-                    <input id="postalCode" name="postalCode" required autoComplete="postal-code" maxLength={20} />
-                  </label>
-                  <label className="field" data-invalid={bad("city")}>
-                    <span>{t.checkout.city}</span>
-                    <input id="city" name="city" required autoComplete="address-level2" maxLength={100} />
-                  </label>
-                  <label className="field" data-invalid={bad("country")}>
-                    <span>{t.checkout.country}</span>
-                    <input
-                      id="country"
-                      name="country"
-                      required
-                      autoComplete="country-name"
-                      defaultValue={locale === "fr" ? "France" : ""}
-                      maxLength={100}
-                    />
-                  </label>
-                </div>
-              </>
-            )}
+          </fieldset>
+
+          <fieldset className="fieldset">
+            <legend>{t.checkout.addressTitle}</legend>
+            <label className="field" data-invalid={bad("addressLine")}>
+              <span>{t.checkout.address}</span>
+              <input id="addressLine" name="addressLine" required autoComplete="street-address" maxLength={200} />
+            </label>
+            <div className="field-row">
+              <label className="field" data-invalid={bad("postalCode")}>
+                <span>{t.checkout.postalCode}</span>
+                <input id="postalCode" name="postalCode" required autoComplete="postal-code" maxLength={20} />
+              </label>
+              <label className="field" data-invalid={bad("city")}>
+                <span>{t.checkout.city}</span>
+                <input id="city" name="city" required autoComplete="address-level2" maxLength={100} />
+              </label>
+              <label className="field" data-invalid={bad("country")}>
+                <span>{t.checkout.country}</span>
+                <input
+                  id="country"
+                  name="country"
+                  required
+                  autoComplete="country-name"
+                  defaultValue={locale === "fr" ? "France" : ""}
+                  maxLength={100}
+                />
+              </label>
+            </div>
           </fieldset>
 
           <label className="field">

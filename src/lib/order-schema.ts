@@ -20,22 +20,18 @@ export const orderSchema = z
     firstName: text(80).min(1),
     lastName: text(80).min(1),
     email: z.email().max(200),
-    phone: optionalText(40),
+    // Au moins 6 chiffres : accepte « 06 12 34 56 78 », « +33 6 12… », « (01) 23-45… ».
+    phone: text(40).refine((v) => v.replace(/\D/g, "").length >= 6, "phone"),
     deliveryMethod: z.enum(["retrait", "livraison"]),
-    addressLine: optionalText(200),
-    postalCode: optionalText(20),
-    city: optionalText(100),
-    country: optionalText(100),
+    // Adresse obligatoire même en retrait (demande d'Ines, pour pouvoir identifier et recontacter l'acheteur).
+    addressLine: text(200).min(1),
+    postalCode: text(20).min(1),
+    city: text(100).min(1),
+    country: text(100).min(1),
     message: optionalText(2000),
     consent: z.literal(true),
     locale: z.enum(["fr", "en"]),
     items: z.array(cartItemSchema).min(1).max(50),
-  })
-  .superRefine((o, ctx) => {
-    if (o.deliveryMethod !== "livraison") return;
-    for (const field of ["addressLine", "postalCode", "city", "country"] as const) {
-      if (!o[field]) ctx.addIssue({ code: "custom", path: [field], message: "required" });
-    }
   });
 export type OrderInput = z.infer<typeof orderSchema>;
 

@@ -56,8 +56,8 @@ function linesTable(lines: Line[], shipping: number, total: number, en: boolean)
 }
 
 function address(o: OrderInput): string {
-  if (o.deliveryMethod === "retrait") return "Retrait en main propre";
-  return `Livraison : ${esc(o.addressLine)}, ${esc(o.postalCode)} ${esc(o.city)}, ${esc(o.country)}`;
+  const postal = `${esc(o.addressLine)}, ${esc(o.postalCode)} ${esc(o.city)}, ${esc(o.country)}`;
+  return o.deliveryMethod === "retrait" ? `Retrait en main propre (adresse : ${postal})` : `Livraison : ${postal}`;
 }
 
 export async function sendOrderEmails(e: OrderEmail): Promise<void> {
@@ -75,7 +75,7 @@ export async function sendOrderEmails(e: OrderEmail): Promise<void> {
 <p style="margin:0 0 16px">${esc(o.firstName)} ${esc(o.lastName)} souhaite commander :</p>
 ${linesTable(e.lines, e.shipping, e.total, false)}
 <p style="margin:18px 0 0"><b>Email :</b> ${esc(o.email)}<br>
-<b>Téléphone :</b> ${esc(o.phone) || "non renseigné"}<br>
+<b>Téléphone :</b> ${esc(o.phone)}<br>
 <b>Réception :</b> ${address(o)}</p>
 ${o.message ? `<p style="margin:12px 0 0"><b>Message :</b><br>${esc(o.message).replace(/\n/g, "<br>")}</p>` : ""}
 <p style="margin:20px 0 0"><a href="${env.siteUrl}/admin/commandes/${e.id}" style="color:#7a2e4e">Ouvrir la commande dans l'espace admin</a></p>

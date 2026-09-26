@@ -94,7 +94,6 @@ async function createOrder(input: unknown): Promise<Result> {
     order.deliveryMethod,
   );
   const total = lines.reduce((sum, l) => sum + l.unit_price_cents * l.quantity, 0) + shippingCost;
-  const shipping = order.deliveryMethod === "livraison";
 
   const { data: created, error } = await db()
     .from("orders")
@@ -104,10 +103,10 @@ async function createOrder(input: unknown): Promise<Result> {
       email: order.email,
       phone: order.phone,
       delivery_method: order.deliveryMethod,
-      address_line: shipping ? order.addressLine : null,
-      postal_code: shipping ? order.postalCode : null,
-      city: shipping ? order.city : null,
-      country: shipping ? order.country : null,
+      address_line: order.addressLine,
+      postal_code: order.postalCode,
+      city: order.city,
+      country: order.country,
       message: order.message,
       locale: order.locale,
       consent_at: new Date().toISOString(),
