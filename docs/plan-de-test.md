@@ -34,6 +34,20 @@ En attendant une réponse, le site garde le comportement indiqué dans la colonn
 | QA-4 | Création des comptes Supabase, Resend et Vercel | ★ Ensemble (environ 30 min) · Ines seule avec le guide | Rien n'est créé, **bloquant pour la mise en ligne** |
 | QA-5 | Statut légal d'Ines (micro-entreprise, artiste-auteur…) | À choisir par Ines | « [à compléter] » sur les pages légales, **bloquant pour l'ouverture réelle** |
 
+### Nouvelles questions issues de la revue du besoin
+
+| # | Question | Choix proposés (★ recommandé) | En attendant |
+|---|---|---|---|
+| N1 | Disposition de la galerie : en colonnes, l'ordre choisi par Ines se lit de haut en bas | ★ Grille alignée, photo entière dans un passe-partout identique · Colonnes (actuel) · Grille recadrée | Colonnes |
+| N2 | Formats possibles selon la photo (un 60 × 90 demande un fichier de très bonne qualité) | ★ Ines coche les formats possibles par photo · Tous pour toutes (actuel) · Tous, avec avertissement | Tous les formats |
+| N3 | Zone de livraison | ★ France métropolitaine · France et Europe · Partout, hors France sur devis | Non précisé |
+| N4 | Moyens de paiement annoncés | ★ Liste sur la confirmation et les CGV · Rien, au cas par cas · Virement uniquement | Rien |
+| N5 | Délai de réponse annoncé à l'acheteur | ★ Sous 48 h · Sous une semaine · Aucun | Aucun |
+| N6 | Aperçu du cadre sur la fiche | ★ Photo du vrai cadre · Cadre dessiné · Texte seul (actuel) | Texte seul |
+| N7 | Prévenir des nouvelles collections | ★ Non pour l'instant · Case facultative à la commande · Formulaire séparé | Non |
+
+Le prototype cliquable de validation des cas d'usage reprend toutes ces questions, avec une grille de réponses qu'Ines peut copier et renvoyer.
+
 ## 3. Points de vigilance
 
 - **Alertes de commande** : sans nom de domaine, Resend n'écrit qu'à l'email de son propre compte. Cet email doit être celui réglé comme « email des alertes » dans l'admin. À vérifier lors du test EM-01.
