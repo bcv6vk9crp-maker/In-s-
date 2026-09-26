@@ -12,6 +12,19 @@ const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "ines@example.com";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "MotDePasse-Test-1";
 const CRON_SECRET = process.env.E2E_CRON_SECRET ?? "test-cron-secret";
+// Accès direct à la base locale, pour préparer certaines données.
+// La clé secrète locale s'affiche avec `npx supabase status` (ligne « Secret »).
+const SUPABASE_URL = process.env.E2E_SUPABASE_URL ?? "http://127.0.0.1:54321";
+const SUPABASE_SECRET = process.env.E2E_SUPABASE_SECRET;
+if (!SUPABASE_SECRET) {
+  console.error("E2E_SUPABASE_SECRET manquante : lancez `npx supabase status` et copiez la clé « Secret ».");
+  process.exit(2);
+}
+const rest = (path, init = {}) =>
+  fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: SUPABASE_SECRET, Authorization: `Bearer ${SUPABASE_SECRET}`, "Content-Type": "application/json", Prefer: "return=representation", ...init.headers },
+  }).then((r) => r.json());
 
 let failures = 0;
 function check(id, label, ok, detail = "") {
@@ -322,6 +335,20 @@ for (let n = 0; n < 3; n++) {
 }
 check("CM-07", "la 4ᵉ commande en 15 min avec le même email est bloquée", (await b.textContent(".alert")).includes("Plusieurs commandes"));
 
+// Robot qui remplit le champ piège : faux succès, rien n'est enregistré
+await b.goto(`${BASE}/photos/samir-au-port`);
+await addToCart(b);
+await b.goto(`${BASE}/commande`);
+await b.fill("#firstName", "Robot");
+await b.fill("#lastName", "Spam");
+await b.fill("#email", "robot@example.com");
+await b.check("#consent");
+await b.evaluate(() => { document.querySelector("input[name=website]").value = "http://spam.example"; });
+await b.click("button:has-text('Envoyer ma commande')");
+await b.waitForURL(/\/commande\/merci/, { waitUntil: "commit" });
+const robotOrders = await rest("orders?email=eq.robot@example.com&select=id");
+check("CM-10", "le champ piège anti-robot : page de merci affichée mais aucune commande créée", robotOrders.length === 0);
+
 // Format retiré par Ines pendant qu'il est dans un panier
 await b.goto(`${BASE}/photos/lea-marseille`);
 await b.waitForLoadState("networkidle");
@@ -357,6 +384,21 @@ await admin.waitForSelector("text=Commande mise à jour.");
 await admin.reload();
 check("CD-02", "statut et notes conservés après rechargement", (await admin.inputValue("#status")) === "payee" && (await admin.inputValue("#internal_notes")).includes("virement"));
 
+// Un changement de prix ne modifie pas les commandes déjà reçues
+await admin.goto(`${BASE}/admin/formats`);
+const f40 = admin.locator("section:has(h2:has-text('40 × 60 cm')) form");
+await f40.locator("input[name=price]").fill("75");
+await f40.locator("button:has-text('Enregistrer')").click();
+await admin.waitForSelector("text=Format enregistré.");
+await admin.goto(`${BASE}/admin/commandes`);
+await admin.click("a:has-text('IB-0001')");
+await admin.waitForSelector("text=Tirages demandés");
+check("CD-05", "après une hausse de prix, la commande garde ses montants (287 €)", euros(await admin.textContent("main")).includes("287 €"));
+await admin.goto(`${BASE}/admin/formats`);
+await admin.locator("section:has(h2:has-text('40 × 60 cm')) form input[name=price]").fill("70");
+await admin.locator("section:has(h2:has-text('40 × 60 cm')) form button:has-text('Enregistrer')").click();
+await admin.waitForSelector("text=Format enregistré.");
+
 await admin.goto(`${BASE}/admin/commandes?statut=payee`);
 check("CD-03", "le filtre par statut fonctionne", (await admin.locator("tbody tr").count()) === 1);
 
@@ -383,6 +425,17 @@ check("CD-04", "suppression d'une commande", !(await admin.textContent("main")).
 const cronNo = await b.request.get(`${BASE}/api/cron/anonymize`);
 const cronYes = await b.request.get(`${BASE}/api/cron/anonymize`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } });
 check("RP-02", "tâche d'anonymisation protégée par secret", cronNo.status() === 401 && cronYes.status() === 200);
+
+// Une commande de plus d'un an est anonymisée par la tâche quotidienne, une récente non
+const longAgo = new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString();
+const [old] = await rest("orders", {
+  method: "POST",
+  body: JSON.stringify({ first_name: "Ancien", last_name: "Client", email: "ancien@example.com", phone: "0600000000", delivery_method: "retrait", consent_at: longAgo, created_at: longAgo, total_cents: 3500 }),
+});
+await b.request.get(`${BASE}/api/cron/anonymize`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } });
+const [oldAfter] = await rest(`orders?id=eq.${old.id}&select=first_name,email,phone,total_cents,anonymized_at`);
+const [recent] = await rest("orders?number=eq.1&select=email");
+check("RP-05", "commande de plus d'un an anonymisée (montant conservé), commande récente intacte", oldAfter.first_name === "Anonyme" && oldAfter.phone === null && oldAfter.total_cents === 3500 && !!oldAfter.anonymized_at && recent.email === "lea@example.com");
 
 /* ---------------- Pages légales, 404, mobile ---------------- */
 await b.goto(`${BASE}/mentions-legales`);

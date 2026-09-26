@@ -18,7 +18,7 @@ export function PurchaseForm({ photo, formats }: { photo: PhotoInfo; formats: Fo
   const [added, setAdded] = useState(false);
 
   const format = formats.find((f) => f.id === formatId) ?? formats[0];
-  if (!format) return null;
+  if (!format) return <p className="muted">{t.photo.noFormat}</p>;
 
   const total = unitPriceCents(format, framed) * quantity;
   const reset = () => setAdded(false);

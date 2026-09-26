@@ -219,7 +219,7 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
             </div>
           ))}
           <div className="summary-line">
-            <span>{t.checkout.shipping_cost}</span>
+            <span>{t.checkout.shippingCost}</span>
             <span>{shipping === 0 ? t.checkout.free : formatEuros(shipping, locale)}</span>
           </div>
           <div className="total-row">

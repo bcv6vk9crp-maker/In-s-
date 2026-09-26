@@ -26,6 +26,7 @@ const fr = {
     viewCart: "Voir le panier",
     noPayment: "Aucun paiement en ligne. Ines vous recontacte pour finaliser la commande.",
     back: "Retour à la galerie",
+    noFormat: "Ce tirage n'est pas disponible à la commande pour le moment.",
   },
   cart: {
     title: "Votre panier",
@@ -51,7 +52,7 @@ const fr = {
     pickupPlace: "Lieu de retrait : {place}.",
     pickupToAgree: "Lieu de retrait à convenir avec la photographe.",
     shipping: "Livraison à domicile",
-    shipping_cost: "Frais de port",
+    shippingCost: "Frais de port",
     free: "Gratuit",
     address: "Adresse",
     postalCode: "Code postal",
@@ -101,6 +102,7 @@ const en: Dict = {
     viewCart: "View cart",
     noPayment: "No online payment. Ines will contact you to finalise your order.",
     back: "Back to the gallery",
+    noFormat: "This print cannot be ordered at the moment.",
   },
   cart: {
     title: "Your cart",
@@ -126,7 +128,7 @@ const en: Dict = {
     pickupPlace: "Collection point: {place}.",
     pickupToAgree: "Collection point to be agreed with the photographer.",
     shipping: "Home delivery",
-    shipping_cost: "Shipping",
+    shippingCost: "Shipping",
     free: "Free",
     address: "Address",
     postalCode: "Postcode",

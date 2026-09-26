@@ -2,7 +2,7 @@
 
 Ce document décrit ce que l'application doit permettre et comment le vérifier avant la mise en ligne. Il commence par les décisions prises avec Ines et par les questions encore ouvertes.
 
-- **Tests automatiques** : `npm test` (règles de calcul, 18 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 73 vérifications, voir `e2e/parcours.mjs`).
+- **Tests automatiques** : `npm test` (règles de calcul, 18 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 76 vérifications, voir `e2e/parcours.mjs`).
 - **Tests manuels** : ceux qu'un robot ne peut pas faire (vrais emails, vrais téléphones, vraies photos d'Ines). Ils sont marqués **Manuel** ci-dessous.
 
 ---
@@ -164,6 +164,7 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 | CM-07 | 4ᵉ commande en 15 min avec le même email (majuscules ou minuscules) | Commande bloquée avec un message | Auto | ✅ |
 | CM-08 | Prix modifié dans le navigateur (outil de développement) | Le serveur recalcule, le prix enregistré reste juste | Unit + revue | ✅ |
 | CM-09 | Page de remerciement | « Transmise à la photographe », aucune promesse d'email | Auto | ✅ |
+| CM-10 | Robot qui remplit le champ piège | Faux message de succès, aucune commande enregistrée | Auto | ✅ |
 | RT-01 | Choix du retrait | Lieu de retrait réglé dans l'admin affiché | Auto | ✅ |
 | EM-01 | Alerte reçue par Ines (vraie clé Resend, compte Resend = email des alertes) | Email reçu, « Répondre » écrit à l'acheteur | Manuel | 🔲 |
 | EM-02 | Récapitulatif acheteur (après achat et vérification d'un domaine) | Email en FR ou en EN selon la langue du site | Manuel | 🔲 |
@@ -178,6 +179,7 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 | CD-02 | Changer le statut et ajouter des notes | Conservés après rechargement | Auto | ✅ |
 | CD-03 | Filtre par statut | Bonne liste | Auto | ✅ |
 | CD-04 | Supprimer une commande (double confirmation) | Commande disparue | Auto | ✅ |
+| CD-05 | Ines augmente un prix après une commande | La commande garde ses montants | Auto | ✅ |
 | EX-01 | Export CSV | Fichier avec les commandes, colonne Port | Auto | ✅ |
 | EX-02 | Texte commençant par `=` ou `+` | Neutralisé (pas de formule exécutée dans Excel) | Auto + Unit | ✅ |
 | EX-03 | Ouvrir l'export dans Excel sur le PC ou le Mac d'Ines | Accents et colonnes corrects | Manuel | 🔲 |
@@ -187,6 +189,7 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 |---|---|---|---|---|
 | RP-01 | Anonymisation manuelle | Coordonnées effacées, montant conservé | Auto | ✅ |
 | RP-02 | Tâche quotidienne appelée sans secret, puis avec | Refus (401), puis exécution (200) | Auto | ✅ |
+| RP-05 | Commande de plus d'un an, puis tâche quotidienne | Coordonnées effacées, montant conservé ; commande récente intacte | Auto | ✅ |
 | RP-03 | Sur Vercel : la tâche apparaît dans *Settings → Cron Jobs* et s'exécute | Exécution quotidienne visible dans les journaux | Manuel | 🔲 |
 | RP-04 | Date limite de conservation | Exactement un an | Unit | ✅ |
 | LE-01 | Mentions légales | Valeurs saisies affichées, « [à compléter] » sinon | Auto | ✅ |
@@ -208,7 +211,7 @@ npx supabase start                     # base locale (Docker), avec le serveur d
 npx supabase db reset                  # base vierge, migrations appliquées
 # créer le compte admin de test (voir README), renseigner .env.local, puis :
 npm run build && npm start &
-E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… E2E_CRON_SECRET=… npm run test:e2e
+E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… E2E_CRON_SECRET=… E2E_SUPABASE_SECRET=… npm run test:e2e
 ```
 
 Le script affiche une ligne ✓ ou ✗ par vérification, puis « Recette OK ». Il doit être lancé sur une base vierge : il vérifie par exemple que la première commande porte le numéro IB-0001, et il change le mot de passe admin pendant le test du mot de passe oublié.
