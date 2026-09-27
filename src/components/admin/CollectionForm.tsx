@@ -23,7 +23,7 @@ export function CollectionForm({ collection }: { collection: Collection | null }
       </div>
       <div className="field-row">
         <label className="field">
-          <span>Note manuscrite (français)</span>
+          <span>Petite phrase sous le titre (français)</span>
           <input
             id={`note_fr-${key}`}
             name="note_fr"
@@ -33,7 +33,7 @@ export function CollectionForm({ collection }: { collection: Collection | null }
           />
         </label>
         <label className="field">
-          <span>Note manuscrite (anglais)</span>
+          <span>Petite phrase sous le titre (anglais)</span>
           <input id={`note_en-${key}`} name="note_en" maxLength={160} defaultValue={collection?.note_en} />
         </label>
       </div>

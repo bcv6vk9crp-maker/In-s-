@@ -205,7 +205,7 @@ await b.waitForSelector("h1:has-text('Portraits')");
 check("GA-02", "le filtre par collection n'affiche que ses photos", (await b.locator(".gallery .print").count()) === 1);
 await b.goto(`${BASE}/?collection=visages-d-ete`);
 check("GA-02", "une photo peut appartenir à plusieurs collections", (await b.locator(".gallery .print").count()) === 2);
-check("GA-03", "la note manuscrite de la collection s'affiche", (await b.textContent(".hand")).includes("Marseille"));
+check("GA-03", "la petite phrase de la collection s'affiche (texte sobre)", (await b.textContent(".tagline")).includes("Marseille"));
 
 await b.goto(`${BASE}/photos/lea-marseille`);
 await b.waitForSelector(".purchase");

@@ -23,7 +23,7 @@ export default async function HomePage(props: PageProps<"/">) {
     <>
       <div className="page-head">
         <h1>{active ? pick(locale, active.name_fr, active.name_en) : t.home.all}</h1>
-        <span className="hand">
+        <span className="tagline">
           {active ? pick(locale, active.note_fr, active.note_en) || t.home.intro : t.home.intro}
         </span>
       </div>

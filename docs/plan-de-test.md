@@ -19,6 +19,7 @@ Ce document décrit ce que l'application doit permettre et comment le vérifier 
 | Factures | Ines les fait en dehors du site. Coordonnées des acheteurs effacées au bout d'un an |
 | Nom de domaine | Lancement sans domaine. La page de remerciement dit « commande transmise à la photographe », sans promettre d'email. **Condition** : le compte Resend doit être créé avec l'adresse qui reçoit les commandes |
 | Mot de passe | Lien « mot de passe oublié » sur la page de connexion |
+| Style des textes | Pas d'écriture manuscrite : la petite phrase sous les titres et le « Merci ! » sont en texte sobre (italique discret) |
 | Formulaire de commande | Prénom, nom, email, téléphone et adresse postale obligatoires, **y compris en retrait**. Case d'accord obligatoire. Seul le message est facultatif |
 | Retrait | Lieu de retrait réglé dans l'admin, affiché à l'acheteur |
 | Contenus | Ines saisit elle-même ses emails, son Instagram, ses collections et ses photos dans l'admin |
@@ -29,7 +30,6 @@ En attendant une réponse, le site garde le comportement indiqué dans la colonn
 
 | # | Question | Choix proposés (★ recommandé) | En attendant |
 |---|---|---|---|
-| QA-1 | Style de la petite phrase sous les titres (l'écriture manuscrite peut faire « vieux carnet » à côté de photos de rue contemporaines) | ★ Texte sobre en italique · Manuscrite penchée · Manuscrite droite · Aucune phrase | Manuscrite penchée |
 | QA-2 | Comment afficher les infos de fabrication (papier, délai, signature) ? | ★ Texte commun modifiable dans les réglages · Texte par photo · Pas affiché | Rien n'est affiché |
 | QA-3 | Qui écrit les textes À propos et Contact, et la version anglaise ? | ★ Ines écrit, Claude traduit · Ines fait tout · Claude propose un brouillon | Textes vides, saisissables dans l'admin |
 | QA-4 | Création des comptes Supabase, Resend et Vercel | ★ Ensemble (environ 30 min) · Ines seule avec le guide | Rien n'est créé, **bloquant pour la mise en ligne** |
@@ -145,7 +145,7 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 |---|---|---|---|---|
 | GA-01 | Afficher la galerie | Toutes les photos visibles | Auto | ✅ |
 | GA-02 | Filtrer par collection, photo présente dans deux collections | Bon sous-ensemble | Auto | ✅ |
-| GA-03 | Note manuscrite de collection | Affichée sous le titre | Auto | ✅ |
+| GA-03 | Petite phrase de collection | Affichée en italique sobre sous le titre | Auto | ✅ |
 | GA-04 | Photos droites | Aucune rotation | Auto | ✅ |
 | GA-05 | Photo masquée | Absente de la galerie, page en 404 | Auto | ✅ |
 | GA-06 | Photo en paysage | Vignette en paysage, non rognée | Auto | ✅ |

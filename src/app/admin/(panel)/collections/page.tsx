@@ -19,7 +19,7 @@ export default async function CollectionsPage() {
       </div>
       <p className="muted" style={{ maxWidth: "70ch" }}>
         Les collections regroupent vos photos par série ou par thème. Une photo peut appartenir à plusieurs
-        collections. La petite note apparaît en écriture manuscrite sous le titre de la collection.
+        collections. La petite phrase facultative s'affiche en italique sous le titre de la collection.
       </p>
 
       <section className="stack">

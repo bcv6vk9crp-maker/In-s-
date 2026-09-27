@@ -15,7 +15,6 @@
   --radius: 14px;
   --shadow: 0 6px 18px rgba(122, 46, 78, 0.15);
   --font-sans: var(--font-bricolage), "Helvetica Neue", Arial, sans-serif;
-  --font-hand: var(--font-caveat), "Comic Sans MS", cursive;
 }
 
 * { box-sizing: border-box; }
@@ -40,7 +39,9 @@ p { margin: 0; }
 @media (min-width: 720px) { .container { padding-inline: 32px; } }
 .stack { display: grid; gap: 16px; }
 .muted { color: var(--muted); }
-.hand { font-family: var(--font-hand); font-size: 22px; color: var(--plum); display: inline-block; transform: rotate(-2deg); }
+/* Petite phrase sous les titres : italique sobre (Ines a écarté l'écriture manuscrite). */
+.tagline { font-style: italic; font-size: 18px; color: var(--muted); }
+.thanks-title { font-size: clamp(30px, 5vw, 40px); font-weight: 650; }
 .prose { max-width: 68ch; display: grid; gap: 14px; white-space: pre-line; }
 .prose h2 { margin-top: 12px; }
 

@@ -10,9 +10,7 @@ export default async function ThanksPage(props: PageProps<"/commande/merci">) {
   const number = typeof n === "string" && /^IB-\d+$/.test(n) ? n : "";
   return (
     <div className="empty">
-      <span className="hand" style={{ fontSize: 30 }}>
-        {t.thanks.title}
-      </span>
+      <h1 className="thanks-title">{t.thanks.title}</h1>
       <p style={{ maxWidth: "60ch" }}>{t.thanks.body.replace(" {number}", number ? ` ${number}` : "")}</p>
       <Link href="/" className="btn">
         {t.thanks.back}

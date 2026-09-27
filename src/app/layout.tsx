@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Caveat } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import { getLocale } from "@/lib/locale";
 import "./globals.css";
 
@@ -8,11 +8,6 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin", "latin-ext"],
 });
 
-const caveat = Caveat({
-  variable: "--font-caveat",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500"],
-});
 
 export const metadata: Metadata = {
   title: { default: "Ines. B — Photographie", template: "%s · Ines. B" },
@@ -22,7 +17,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   return (
-    <html lang={locale} className={`${bricolage.variable} ${caveat.variable}`}>
+    <html lang={locale} className={bricolage.variable}>
       <body>{children}</body>
     </html>
   );
