@@ -45,6 +45,14 @@ Ce document décrit ce que l'application doit permettre et comment le vérifier 
 | UC-I2 | Alerte email de commande | L'adresse email d'Ines, puis un test réel (EM-01) | Non testé en réel |
 | UC-I1 | Connexion et mot de passe oublié sur le vrai site | À tester en dernier, après la création des comptes (MP-07) | Testé en local uniquement |
 
+### Validation des cas d'usage par Ines (prototype)
+
+| Statut | Cas d'usage |
+|---|---|
+| ✅ Validés | UC-A1 à UC-A6, UC-I3, UC-I4, UC-I5, UC-I6, UC-I8, UC-I9, UC-I10 |
+| 🔧 Corrigé, à revalider | UC-I7 : page de modification d'une photo (titre et description mal placés), aperçu désormais au-dessus des champs |
+| ⏳ À voir avec Ines | UC-A7 (textes et pages légales), UC-I1 (connexion, à tester en dernier), UC-I2 (alerte email) ; questions N4, QA-3, QA-5 |
+
 ## 3. Points de vigilance
 
 - **Alertes de commande** : sans nom de domaine, Resend n'écrit qu'à l'email de son propre compte. Cet email doit être celui réglé comme « email des alertes » dans l'admin. À vérifier lors du test EM-01.

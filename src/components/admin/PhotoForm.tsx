@@ -153,26 +153,23 @@ export function PhotoForm({
 
   return (
     <form className="card form-grid" onSubmit={onSubmit}>
-      <div className="field-row" style={{ alignItems: "start" }}>
-        <div className="form-grid">
-          <label className="field">
-            <span>{photo ? "Remplacer l'image" : "Image"}</span>
-            <input id="source" name="source" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
-            <span className="hint">
-              Envoyez l&apos;original : le site prépare une vignette pour la galerie et une grande image de {MAX_EDGE} px
-              couverte du filigrane « {WATERMARK} », automatiquement. L&apos;original n&apos;est jamais mis en ligne.
-            </span>
-          </label>
-          {processing && <p className="muted">Préparation de l&apos;image…</p>}
-          {imageError && <p className="alert">{imageError}</p>}
+      {/* Aperçu au-dessus, puis les champs sur toute la largeur : même rendu sur ordinateur et téléphone. */}
+      {preview && (
+        <div className="photo-preview">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Aperçu" />
         </div>
-        {preview && (
-          <div className="photo-preview">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="Aperçu" />
-          </div>
-        )}
-      </div>
+      )}
+      <label className="field">
+        <span>{photo ? "Remplacer l'image" : "Image"}</span>
+        <input id="source" name="source" type="file" accept="image/jpeg,image/png,image/webp" onChange={onFile} />
+        <span className="hint">
+          Envoyez l&apos;original : le site prépare une vignette pour la galerie et une grande image de {MAX_EDGE} px
+          couverte du filigrane « {WATERMARK} », automatiquement. L&apos;original n&apos;est jamais mis en ligne.
+        </span>
+      </label>
+      {processing && <p className="muted">Préparation de l&apos;image…</p>}
+      {imageError && <p className="alert">{imageError}</p>}
 
       <div className="field-row">
         <label className="field">
