@@ -109,27 +109,32 @@ p { margin: 0; }
 
 /* Galerie */
 .page-head { display: grid; gap: 6px; margin-block: 24px 20px; }
-/* Colonnes : chaque vignette garde la forme réelle de sa photo (portrait ou paysage). */
-.gallery { columns: 3 240px; column-gap: 26px; margin-top: 28px; }
-.print { display: grid; gap: 10px; text-decoration: none; break-inside: avoid; margin-bottom: 34px; }
+/* Grille alignée (choix d'Ines) : chaque photo entière dans un passe-partout de même taille ; l'ordre se lit ligne par ligne. */
+.gallery { display: grid; gap: 34px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); margin-top: 28px; }
+.print { display: grid; gap: 10px; text-decoration: none; align-content: start; }
 .print-frame { background: var(--paper); padding: 8px; box-shadow: var(--shadow); transition: transform 0.25s ease; }
 .print:hover .print-frame { transform: translateY(-3px); }
-.print-frame img { width: 100%; height: auto; background: var(--peach-deep); }
+/* position relative + image en absolu : la taille du passe-partout ne dépend que de sa largeur, jamais de la photo. */
+.gallery .print-frame { aspect-ratio: 4 / 5; background: #fbf6f2; position: relative; --mat: 14px; }
+.gallery .print-frame img { position: absolute; inset: var(--mat); width: calc(100% - 2 * var(--mat)); height: calc(100% - 2 * var(--mat)); object-fit: contain; background: transparent; }
+.print-frame img { background: var(--peach-deep); }
 /* Pas de « Enregistrer l'image » ni de glisser-déposer sur les photos (dissuasif ;
    la vraie protection est le filigrane incrusté dans le fichier). */
 .print-frame img, .cart-line img { pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 .print-caption { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); }
 .print-caption b { color: var(--ink); font-weight: 600; }
-@media (max-width: 560px) { .gallery { columns: 2; column-gap: 14px; } .print { margin-bottom: 24px; } .print-frame { padding: 5px; } .print-caption { flex-direction: column; gap: 0; font-size: 13px; } }
+@media (max-width: 560px) { .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; } .gallery .print-frame { padding: 0; --mat: 8px; } .print-frame { padding: 5px; } .print-caption { flex-direction: column; gap: 0; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .print-frame { transition: none; } }
 
 /* Fiche photo */
 .photo-page { display: grid; gap: 36px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; margin-top: 16px; }
 @media (max-width: 860px) { .photo-page { grid-template-columns: 1fr; } }
 .photo-page .print-frame { padding: 12px; }
-.photo-page .print-frame img { aspect-ratio: auto; object-fit: contain; max-height: 82vh; margin-inline: auto; width: auto; }
-.photo-page .print-frame { justify-self: center; }
+/* Grande image : entière, jamais plus haute que l'écran (photos verticales comprises). */
+.photo-page .print-frame img { display: block; width: auto; height: auto; max-width: 100%; max-height: min(80vh, 860px); margin-inline: auto; }
+.photo-page .print-frame { justify-self: center; width: fit-content; max-width: 100%; }
 .purchase { display: grid; gap: 18px; }
+.fabrication { font-size: 14px; color: var(--muted); white-space: pre-line; border-left: 2px solid var(--line); padding-left: 12px; }
 .option-group { display: grid; gap: 8px; font-size: 14px; }
 .option-group > span { font-weight: 500; color: var(--muted); }
 .total-row { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; border-top: 1px solid var(--line); padding-top: 14px; }
@@ -210,3 +215,4 @@ p { margin: 0; }
 .section-title { font-size: 18px; margin-top: 8px; }
 .login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .login form { width: min(100%, 380px); }
+.field input[readonly] { background: var(--peach); color: var(--muted); }

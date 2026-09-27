@@ -2,7 +2,7 @@
 
 Ce document décrit ce que l'application doit permettre et comment le vérifier avant la mise en ligne. Il commence par les décisions prises avec Ines et par les questions encore ouvertes.
 
-- **Tests automatiques** : `npm test` (règles de calcul, 20 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 85 vérifications, voir `e2e/parcours.mjs`).
+- **Tests automatiques** : `npm test` (règles de calcul, 24 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 93 vérifications, voir `e2e/parcours.mjs`).
 - **Tests manuels** : ceux qu'un robot ne peut pas faire (vrais emails, vrais téléphones, vraies photos d'Ines). Ils sont marqués **Manuel** ci-dessous.
 
 ---
@@ -20,35 +20,30 @@ Ce document décrit ce que l'application doit permettre et comment le vérifier 
 | Nom de domaine | Lancement sans domaine. La page de remerciement dit « commande transmise à la photographe », sans promettre d'email. **Condition** : le compte Resend doit être créé avec l'adresse qui reçoit les commandes |
 | Mot de passe | Lien « mot de passe oublié » sur la page de connexion |
 | Protection des photos | Grande image de la fiche couverte d'un filigrane « © Ines. B » répété et incrusté dans le fichier ; galerie en vignette réduite ; clic droit « Enregistrer l'image » désactivé sur les photos. Une capture d'écran ne peut pas être empêchée, mais elle reste inutilisable |
+| Galerie (N1) | Grille alignée : chaque photo entière dans un passe-partout de même taille, ordre lu ligne par ligne |
+| Formats par photo (N2) | Ines coche les formats possibles pour chaque photo (tous par défaut) |
+| Zone de livraison (N3) | France métropolitaine uniquement, Corse comprise ; le retrait reste possible pour tous |
+| Délai de réponse (N5) | « Ines vous répond sous 48 h » sur la commande, la confirmation et l'email |
+| Aperçu du cadre (N6) | Texte seulement |
+| Nouvelles collections (N7) | Pas de liste d'abonnés pour l'instant |
+| Fabrication (QA-2) | Un texte commun à toutes les fiches, modifiable dans les réglages |
+| Libellés | « Frais de port » partout (et non « port ») |
 | Style des textes | Pas d'écriture manuscrite : la petite phrase sous les titres et le « Merci ! » sont en texte sobre (italique discret) |
 | Formulaire de commande | Prénom, nom, email, téléphone et adresse postale obligatoires, **y compris en retrait**. Case d'accord obligatoire. Seul le message est facultatif |
 | Retrait | Lieu de retrait réglé dans l'admin, affiché à l'acheteur |
 | Contenus | Ines saisit elle-même ses emails, son Instagram, ses collections et ses photos dans l'admin |
 
-## 2. Questions en attente
+## 2. En attente (retours d'Ines sur le prototype)
 
-En attendant une réponse, le site garde le comportement indiqué dans la colonne de droite.
-
-| # | Question | Choix proposés (★ recommandé) | En attendant |
+| # | Sujet | Ce qu'il faut | En attendant |
 |---|---|---|---|
-| QA-2 | Comment afficher les infos de fabrication (papier, délai, signature) ? | ★ Texte commun modifiable dans les réglages · Texte par photo · Pas affiché | Rien n'est affiché |
-| QA-3 | Qui écrit les textes À propos et Contact, et la version anglaise ? | ★ Ines écrit, Claude traduit · Ines fait tout · Claude propose un brouillon | Textes vides, saisissables dans l'admin |
-| QA-4 | Création des comptes Supabase, Resend et Vercel | ★ Ensemble (environ 30 min) · Ines seule avec le guide | Rien n'est créé, **bloquant pour la mise en ligne** |
-| QA-5 | Statut légal d'Ines (micro-entreprise, artiste-auteur…) | À choisir par Ines | « [à compléter] » sur les pages légales, **bloquant pour l'ouverture réelle** |
-
-### Nouvelles questions issues de la revue du besoin
-
-| # | Question | Choix proposés (★ recommandé) | En attendant |
-|---|---|---|---|
-| N1 | Disposition de la galerie : en colonnes, l'ordre choisi par Ines se lit de haut en bas | ★ Grille alignée, photo entière dans un passe-partout identique · Colonnes (actuel) · Grille recadrée | Colonnes |
-| N2 | Formats possibles selon la photo (un 60 × 90 demande un fichier de très bonne qualité) | ★ Ines coche les formats possibles par photo · Tous pour toutes (actuel) · Tous, avec avertissement | Tous les formats |
-| N3 | Zone de livraison | ★ France métropolitaine · France et Europe · Partout, hors France sur devis | Non précisé |
-| N4 | Moyens de paiement annoncés | ★ Liste sur la confirmation et les CGV · Rien, au cas par cas · Virement uniquement | Rien |
-| N5 | Délai de réponse annoncé à l'acheteur | ★ Sous 48 h · Sous une semaine · Aucun | Aucun |
-| N6 | Aperçu du cadre sur la fiche | ★ Photo du vrai cadre · Cadre dessiné · Texte seul (actuel) | Texte seul |
-| N7 | Prévenir des nouvelles collections | ★ Non pour l'instant · Case facultative à la commande · Formulaire séparé | Non |
-
-Le prototype cliquable de validation des cas d'usage reprend toutes ces questions, avec une grille de réponses qu'Ines peut copier et renvoyer.
+| N4 | Moyens de paiement annoncés | Liste des moyens acceptés par Ines (virement, Wero, Lydia, espèces au retrait…) et conditions de vente associées | Rien n'est affiché |
+| QA-3 | Textes À propos et Contact, version anglaise | Ce qu'Ines souhaite écrire | Textes vides, saisissables dans l'admin |
+| QA-5 | Statut légal d'Ines | Ines se renseigne (micro-entreprise, artiste-auteur…) | « [à compléter] » sur les pages légales, **bloquant pour l'ouverture réelle** |
+| QA-4 | Création des comptes Supabase, Resend et Vercel | Séance ensemble, environ 30 min (décidé) | **Bloquant pour la mise en ligne** |
+| UC-A7 / UC-I9 | Pages À propos, Contact, légales, lieu de retrait, emails | Contenus fournis par Ines, saisis ensemble | Textes d'exemple |
+| UC-I2 | Alerte email de commande | L'adresse email d'Ines, puis un test réel (EM-01) | Non testé en réel |
+| UC-I1 | Connexion et mot de passe oublié sur le vrai site | À tester en dernier, après la création des comptes (MP-07) | Testé en local uniquement |
 
 ## 3. Points de vigilance
 
@@ -214,6 +209,19 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 | RP-03 | Sur Vercel : la tâche apparaît dans *Settings → Cron Jobs* et s'exécute | Exécution quotidienne visible dans les journaux | Manuel | 🔲 |
 | RP-04 | Date limite de conservation | Exactement un an | Unit | ✅ |
 | LE-01 | Mentions légales | Valeurs saisies affichées, « [à compléter] » sinon | Auto | ✅ |
+
+### Retours d'Ines sur le prototype
+| ID | Cas | Résultat attendu | Type | Statut |
+|---|---|---|---|---|
+| GA-07 | Galerie (N1) | Tous les passe-partout ont la même taille, photos entières | Auto | ✅ |
+| FI-04 | Texte de fabrication (QA-2) | Affiché sur chaque fiche | Auto | ✅ |
+| PF-01 | Format retiré pour une photo (N2) | N'est plus proposé sur sa fiche | Auto + Unit | ✅ |
+| PF-02 | Même format, autre photo | Toujours proposé | Auto | ✅ |
+| PF-03 | Format retiré alors qu'il est dans un panier | Ligne enlevée à la commande, avec un message | Auto | ✅ |
+| ZO-01 | Livraison (N3) | Pays fixé sur France, zone annoncée | Auto | ✅ |
+| ZO-02 | Code postal d'outre-mer en livraison | Refusé, champ signalé | Auto + Unit | ✅ |
+| CM-13 | Délai de réponse (N5) | « Sous 48 h » sur la confirmation | Auto | ✅ |
+| FA-01 | Photo verticale ouverte en grand (retour UC-A1) | Entière, jamais plus haute que l'écran, sur ordinateur et téléphone | Manuel (Ines) | 🔲 |
 
 ### Affichage et appareils
 | ID | Cas | Résultat attendu | Type | Statut |

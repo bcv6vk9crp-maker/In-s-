@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeCartItems, orderSchema } from "@/lib/order-schema";
+import { isMainlandPostalCode, mergeCartItems, orderSchema } from "@/lib/order-schema";
 
 const photoId = "3f2b8c1e-5a4d-4c7e-9b1a-2d3e4f5a6b7c";
 const formatId = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
@@ -75,5 +75,25 @@ describe("mergeCartItems", () => {
       { photoId, formatId, framed: true, quantity: 1 },
       { photoId, formatId: otherFormat, framed: false, quantity: 2 },
     ]);
+  });
+});
+
+describe("livraison en France métropolitaine", () => {
+  it("reconnaît les codes postaux métropolitains, Corse comprise", () => {
+    expect(isMainlandPostalCode("13002")).toBe(true);
+    expect(isMainlandPostalCode("20000")).toBe(true);
+    expect(isMainlandPostalCode("75 001")).toBe(true);
+    expect(isMainlandPostalCode("97100")).toBe(false);
+    expect(isMainlandPostalCode("98800")).toBe(false);
+    expect(isMainlandPostalCode("1300")).toBe(false);
+  });
+
+  it("refuse une livraison hors de France métropolitaine, accepte le retrait", () => {
+    const livraison = { ...base, deliveryMethod: "livraison" };
+    expect(orderSchema.safeParse(livraison).success).toBe(true);
+    const r = orderSchema.safeParse({ ...livraison, postalCode: "97100", country: "Belgique" });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues.map((i) => i.path[0]).sort()).toEqual(["country", "postalCode"]);
+    expect(orderSchema.safeParse({ ...base, postalCode: "1000", country: "Belgique" }).success).toBe(true);
   });
 });

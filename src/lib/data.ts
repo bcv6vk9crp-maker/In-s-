@@ -5,6 +5,8 @@ import type { FormatPrice } from "@/lib/pricing";
 export type Settings = {
   notification_email: string | null;
   pickup_location: string;
+  fabrication_fr: string;
+  fabrication_en: string;
   contact_email: string | null;
   instagram: string | null;
   about_fr: string;
@@ -44,6 +46,7 @@ export type Photo = {
   year: number | null;
   image_path: string;
   thumb_path: string | null; // vignette (galerie) ; null pour les photos ajoutées avant sa création
+  format_ids: string[] | null; // formats possibles pour cette photo ; null = tous
   width: number;
   height: number;
   position: number;

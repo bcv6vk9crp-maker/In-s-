@@ -33,7 +33,7 @@ Les comptes sont créés au nom d'Ines, avec son email. Elle en reste propriéta
 ### 1. Supabase (base de données et stockage des images)
 
 1. Créer un compte sur [supabase.com](https://supabase.com), puis un projet. **Région : Europe** (Paris ou Frankfurt), pour le RGPD.
-2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**. Recommencer avec [`0002_formats_port_retrait.sql`](supabase/migrations/0002_formats_port_retrait.sql), qui crée les 4 formats par défaut, puis avec [`0003_vignettes.sql`](supabase/migrations/0003_vignettes.sql).
+2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**. Recommencer avec [`0002_formats_port_retrait.sql`](supabase/migrations/0002_formats_port_retrait.sql), qui crée les 4 formats par défaut, puis avec [`0003_vignettes.sql`](supabase/migrations/0003_vignettes.sql) et [`0004_formats_par_photo_fabrication.sql`](supabase/migrations/0004_formats_par_photo_fabrication.sql).
 3. Ouvrir **Authentication → Users → Add user → Create new user** : saisir l'email et le mot de passe qu'Ines utilisera pour se connecter à l'admin, et cocher *Auto Confirm User*.
 4. Dans **Authentication → Sign In / Providers**, désactiver *Allow new users to sign up*, pour que personne d'autre ne puisse créer de compte.
 5. Dans **Project Settings → API Keys**, noter l'URL du projet, la *Publishable key* et la *Secret key*.

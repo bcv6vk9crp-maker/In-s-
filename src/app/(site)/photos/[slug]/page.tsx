@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PurchaseForm } from "@/components/PurchaseForm";
-import { getFormats, getPhotoBySlug } from "@/lib/data";
+import { getFormats, getPhotoBySlug, getSettings } from "@/lib/data";
 import { pick } from "@/lib/i18n";
+import { formatsForPhoto } from "@/lib/pricing";
 import { getDictionary } from "@/lib/locale";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,11 @@ export async function generateMetadata(props: PageProps<"/photos/[slug]">): Prom
 export default async function PhotoPage(props: PageProps<"/photos/[slug]">) {
   const { slug } = await props.params;
   const { locale, t } = await getDictionary();
-  const [photo, formats] = await Promise.all([getPhotoBySlug(slug), getFormats({ onlyActive: true })]);
+  const [photo, formats, settings] = await Promise.all([
+    getPhotoBySlug(slug),
+    getFormats({ onlyActive: true }),
+    getSettings(),
+  ]);
   if (!photo || !photo.visible) notFound();
 
   const title = pick(locale, photo.title_fr, photo.title_en);
@@ -49,7 +54,8 @@ export default async function PhotoPage(props: PageProps<"/photos/[slug]">) {
               titleEn: photo.title_en,
               imageUrl: photo.thumb_url,
             }}
-            formats={formats}
+            formats={formatsForPhoto(formats, photo.format_ids)}
+            fabrication={pick(locale, settings.fabrication_fr, settings.fabrication_en)}
           />
         </div>
       </div>

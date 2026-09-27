@@ -14,7 +14,7 @@ type Delivery = DeliveryMethod;
 
 export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice[]; pickupLocation: string }) {
   const { locale, t } = useI18n();
-  const { lines: allLines, ready, clear, removePhotos, removeFormats } = useCart();
+  const { lines: allLines, ready, clear, removePhotos, removeFormats, removeLines } = useCart();
   const { byId, formatRemoved } = useActiveFormats(formats);
   const lines = allLines.filter((l) => byId.has(l.formatId));
   const router = useRouter();
@@ -76,6 +76,7 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
       if (result.reason === "unavailable") {
         removePhotos(result.unavailable);
         removeFormats(result.unavailableFormats);
+        removeLines(result.unavailableLines);
         setError(result.unavailable.length > 0 ? t.cart.unavailable : t.cart.formatUnavailable);
       } else if (result.reason === "tooMany") {
         setError(t.checkout.tooMany);
@@ -141,6 +142,11 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
                   : t.checkout.pickupToAgree}
               </p>
             )}
+            {delivery === "livraison" && (
+              <p className="muted" style={{ fontSize: 13 }}>
+                {t.checkout.zoneNote}
+              </p>
+            )}
           </fieldset>
 
           <fieldset className="fieldset">
@@ -160,12 +166,15 @@ export function CheckoutForm({ formats, pickupLocation }: { formats: FormatPrice
               </label>
               <label className="field" data-invalid={bad("country")}>
                 <span>{t.checkout.country}</span>
+                {/* En livraison, uniquement la France métropolitaine : pays fixé. */}
                 <input
+                  key={delivery}
                   id="country"
                   name="country"
                   required
                   autoComplete="country-name"
-                  defaultValue={locale === "fr" ? "France" : ""}
+                  readOnly={delivery === "livraison"}
+                  defaultValue={delivery === "livraison" || locale === "fr" ? "France" : ""}
                   maxLength={100}
                 />
               </label>

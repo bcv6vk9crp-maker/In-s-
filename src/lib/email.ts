@@ -84,11 +84,11 @@ ${o.message ? `<p style="margin:12px 0 0"><b>Message :</b><br>${esc(o.message).r
   const recap = layout(
     en
       ? `<p style="margin:0 0 12px;font-size:18px;font-weight:700">Thank you, ${esc(o.firstName)}!</p>
-<p style="margin:0 0 16px">Your order ${e.number} has been sent to Ines. No payment has been taken: she will contact you shortly to confirm it and arrange payment.</p>
+<p style="margin:0 0 16px">Your order ${e.number} has been sent to Ines. No payment has been taken: she will get back to you within 48 hours to confirm it and arrange payment.</p>
 ${linesTable(e.lines, e.shipping, e.total, true)}
 <p style="margin:18px 0 0;color:#7c5e68;font-size:13px">You can reply to this email to reach Ines.</p>`
       : `<p style="margin:0 0 12px;font-size:18px;font-weight:700">Merci ${esc(o.firstName)} !</p>
-<p style="margin:0 0 16px">Votre commande ${e.number} a bien été transmise à Ines. Aucun paiement n'a été effectué : elle vous recontacte très vite pour la confirmer et convenir du paiement.</p>
+<p style="margin:0 0 16px">Votre commande ${e.number} a bien été transmise à Ines. Aucun paiement n'a été effectué : elle vous répond sous 48 h pour la confirmer et convenir du paiement.</p>
 ${linesTable(e.lines, e.shipping, e.total, false)}
 <p style="margin:18px 0 0;color:#7c5e68;font-size:13px">Vous pouvez répondre à cet email pour écrire à Ines.</p>`,
   );

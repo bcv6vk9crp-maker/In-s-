@@ -25,6 +25,7 @@ type CartContextValue = {
   remove: (index: number) => void;
   removePhotos: (photoIds: string[]) => void;
   removeFormats: (formatIds: string[]) => void;
+  removeLines: (lines: { photoId: string; formatId: string }[]) => void;
   clear: () => void;
 };
 
@@ -110,6 +111,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       remove: (index) => update((prev) => prev.filter((_, i) => i !== index)),
       removePhotos: (ids) => update((prev) => prev.filter((l) => !ids.includes(l.photoId))),
       removeFormats: (ids) => update((prev) => prev.filter((l) => !ids.includes(l.formatId))),
+      removeLines: (gone) =>
+        update((prev) => prev.filter((l) => !gone.some((g) => g.photoId === l.photoId && g.formatId === l.formatId))),
       clear: () => update(() => []),
     }),
     [lines, ready, update],

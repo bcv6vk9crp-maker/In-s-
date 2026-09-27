@@ -3,14 +3,18 @@ import { notFound } from "next/navigation";
 import { deletePhoto } from "@/app/admin/actions";
 import { ConfirmButton } from "@/components/admin/ConfirmButton";
 import { PhotoForm } from "@/components/admin/PhotoForm";
-import { getCollections, getPhotoById } from "@/lib/data";
+import { getCollections, getFormats, getPhotoById } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditPhotoPage(props: PageProps<"/admin/photos/[id]">) {
   const { id } = await props.params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const [photo, collections] = await Promise.all([getPhotoById(id), getCollections({ onlyVisible: false })]);
+  const [photo, collections, formats] = await Promise.all([
+    getPhotoById(id),
+    getCollections({ onlyVisible: false }),
+    getFormats({ onlyActive: false }),
+  ]);
   if (!photo) notFound();
   return (
     <>
@@ -27,7 +31,7 @@ export default async function EditPhotoPage(props: PageProps<"/admin/photos/[id]
           </Link>
         )}
       </div>
-      <PhotoForm photo={photo} collections={collections} />
+      <PhotoForm photo={photo} collections={collections} formats={formats} />
       <section className="danger-zone">
         <p className="muted" style={{ fontSize: 14 }}>
           Supprimer la photo la retire du site. Les commandes passées gardent son titre. Pour la retirer

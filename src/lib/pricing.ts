@@ -9,6 +9,11 @@ export type FormatPrice = {
   shipping_cents: number;
 };
 
+/** Formats proposés pour une photo : ceux qu'Ines a cochés (tous si aucun choix). */
+export function formatsForPhoto<F extends { id: string }>(formats: F[], allowed: string[] | null): F[] {
+  return allowed ? formats.filter((f) => allowed.includes(f.id)) : formats;
+}
+
 export type DeliveryMethod = "retrait" | "livraison";
 
 export function unitPriceCents(format: FormatPrice, framed: boolean): number {

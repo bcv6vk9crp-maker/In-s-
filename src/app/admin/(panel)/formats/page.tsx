@@ -16,9 +16,9 @@ export default async function FormatsPage() {
       </div>
       <p className="muted" style={{ maxWidth: "72ch" }}>
         Les formats proposés à l&apos;achat sur chaque photo, du classique au grand format (2 à 4 conseillés).
-        Pour chacun : le prix du tirage, le supplément si l&apos;acheteur choisit un cadre, et le forfait de port.
-        Le port n&apos;est compté qu&apos;une fois par commande, au montant du plus grand format du panier, et il est
-        gratuit en retrait. Les commandes déjà reçues gardent leurs prix.
+        Pour chacun : le prix du tirage, le supplément si l&apos;acheteur choisit un cadre, et les frais de port.
+        Les frais de port ne sont comptés qu&apos;une fois par commande, au montant du plus grand format du panier, et ils sont
+        gratuits en retrait. Les commandes déjà reçues gardent leurs prix.
       </p>
       {active === 0 && (
         <p className="alert">Aucun format actif : les photos ne peuvent pas être commandées.</p>

@@ -27,7 +27,7 @@ export function FormatForm({ format }: { format: Format | null }) {
           <input id={`frame-${k}`} name="frame" inputMode="decimal" required defaultValue={format ? euros(format.frame_cents) : ""} />
         </label>
         <label className="field">
-          <span>Forfait de port (€)</span>
+          <span>Frais de port (€)</span>
           <input id={`shipping-${k}`} name="shipping" inputMode="decimal" required defaultValue={format ? euros(format.shipping_cents) : ""} />
         </label>
       </div>

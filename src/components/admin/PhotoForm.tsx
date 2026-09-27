@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { savePhoto } from "@/app/admin/actions";
-import type { Collection, Photo } from "@/lib/data";
+import type { Collection, Format, Photo } from "@/lib/data";
 
 const MAX_EDGE = 1600;
 const THUMB_EDGE = 900;
@@ -97,7 +97,15 @@ async function processImage(file: File): Promise<Processed> {
   }
 }
 
-export function PhotoForm({ photo, collections }: { photo: Photo | null; collections: Collection[] }) {
+export function PhotoForm({
+  photo,
+  collections,
+  formats,
+}: {
+  photo: Photo | null;
+  collections: Collection[];
+  formats: Format[];
+}) {
   const [state, formAction, saving] = useActionState(savePhoto.bind(null, photo?.id ?? null), undefined);
   const [processed, setProcessed] = useState<Processed | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -200,6 +208,29 @@ export function PhotoForm({ photo, collections }: { photo: Photo | null; collect
           <span className="hint">Les plus petits nombres apparaissent en premier.</span>
         </label>
       </div>
+
+      <fieldset className="fieldset">
+        <legend>Formats possibles pour cette photo</legend>
+        <p className="muted" style={{ fontSize: 13, margin: 0 }}>
+          Décochez les formats trop grands pour la qualité de ce fichier. Les prix se règlent dans « Formats et prix ».
+        </p>
+        <div className="checks">
+          {formats.map((f) => (
+            <label key={f.id} className="check">
+              <input
+                type="checkbox"
+                name="formats"
+                value={f.id}
+                defaultChecked={!photo?.format_ids || photo.format_ids.includes(f.id)}
+              />
+              <span>
+                {f.label}
+                {!f.active && " (format désactivé)"}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <fieldset className="fieldset">
         <legend>Collections</legend>

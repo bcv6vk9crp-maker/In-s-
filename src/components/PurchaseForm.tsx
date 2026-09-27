@@ -9,7 +9,15 @@ import { formatEuros, unitPriceCents, type FormatPrice } from "@/lib/pricing";
 
 type PhotoInfo = Pick<CartLine, "photoId" | "slug" | "titleFr" | "titleEn" | "imageUrl">;
 
-export function PurchaseForm({ photo, formats }: { photo: PhotoInfo; formats: FormatPrice[] }) {
+export function PurchaseForm({
+  photo,
+  formats,
+  fabrication,
+}: {
+  photo: PhotoInfo;
+  formats: FormatPrice[];
+  fabrication: string;
+}) {
   const { locale, t } = useI18n();
   const { add } = useCart();
   const [formatId, setFormatId] = useState(formats[0]?.id);
@@ -105,6 +113,7 @@ export function PurchaseForm({ photo, formats }: { photo: PhotoInfo; formats: Fo
           {t.photo.added} · <Link href="/panier">{t.photo.viewCart}</Link>
         </p>
       )}
+      {fabrication && <p className="fabrication">{fabrication}</p>}
       <p className="muted" style={{ fontSize: 13 }}>
         {t.photo.noPayment}
       </p>

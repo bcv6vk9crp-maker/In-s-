@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   const header = [
     "Numéro", "Date", "Statut", "Prénom", "Nom", "Email", "Téléphone", "Réception",
-    "Adresse", "Code postal", "Ville", "Pays", "Tirages", "Port (€)", "Total (€)", "Message", "Notes internes",
+    "Adresse", "Code postal", "Ville", "Pays", "Tirages", "Frais de port (€)", "Total (€)", "Message", "Notes internes",
   ];
   const lines = (data as Row[]).map((o) =>
     [

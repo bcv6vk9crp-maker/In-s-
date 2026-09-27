@@ -40,7 +40,7 @@ export function SettingsForm({ settings: s, adminEmail }: { settings: Settings; 
   return (
     <form onSubmit={onSubmit} className="form-grid">
       <p className="muted" style={{ fontSize: 14 }}>
-        Les prix des tirages, du cadre et du port se règlent dans{" "}
+        Les prix des tirages, du cadre et les frais de port se règlent dans{" "}
         <Link href="/admin/formats">Formats et prix</Link>.
       </p>
 
@@ -71,6 +71,16 @@ export function SettingsForm({ settings: s, adminEmail }: { settings: Settings; 
         <h2 className="section-title" style={{ marginTop: 0 }}>
           Textes du site
         </h2>
+        <div className="field-row">
+          <Text
+            name="fabrication_fr"
+            label="Fabrication (français)"
+            value={s.fabrication_fr}
+            area
+            hint="Affiché sur toutes les fiches, par exemple : papier d'art mat, tirage signé, remis sous 10 jours."
+          />
+          <Text name="fabrication_en" label="Fabrication (anglais)" value={s.fabrication_en} area />
+        </div>
         <div className="field-row">
           <Text name="about_fr" label="À propos (français)" value={s.about_fr} area />
           <Text name="about_en" label="À propos (anglais)" value={s.about_en} area />

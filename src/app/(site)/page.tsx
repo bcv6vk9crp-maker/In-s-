@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCollections, getFormats, getPhotos } from "@/lib/data";
 import { getDictionary } from "@/lib/locale";
 import { pick } from "@/lib/i18n";
-import { formatEuros } from "@/lib/pricing";
+import { formatEuros, formatsForPhoto } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,10 @@ export default async function HomePage(props: PageProps<"/">) {
 
   const active = collections.find((c) => c.slug === collection) ?? null;
   const shown = active ? photos.filter((p) => p.collection_ids.includes(active.id)) : photos;
-  const fromPrice = formats.length > 0 ? formatEuros(Math.min(...formats.map((f) => f.price_cents)), locale) : null;
+  const fromPrice = (allowed: string[] | null) => {
+    const offered = formatsForPhoto(formats, allowed);
+    return offered.length > 0 ? formatEuros(Math.min(...offered.map((f) => f.price_cents)), locale) : null;
+  };
 
   return (
     <>
@@ -60,9 +63,9 @@ export default async function HomePage(props: PageProps<"/">) {
                 </div>
                 <div className="print-caption">
                   <b>{title}</b>
-                  {fromPrice && (
+                  {fromPrice(p.format_ids) && (
                     <span>
-                      {t.home.from} {fromPrice}
+                      {t.home.from} {fromPrice(p.format_ids)}
                     </span>
                   )}
                 </div>

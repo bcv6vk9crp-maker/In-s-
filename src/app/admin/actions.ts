@@ -142,6 +142,11 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const fields = parsed.data;
   const collectionIds = form.getAll("collections").map(String);
+  const checkedFormats = form.getAll("formats").map(String);
+  if (checkedFormats.length === 0) return { error: "Cochez au moins un format possible pour cette photo." };
+  const allFormats = (await db().from("formats").select("id")).data?.map((f) => f.id as string) ?? [];
+  // Tous cochés : null, pour que les formats créés plus tard soient aussi proposés.
+  const format_ids = allFormats.every((id) => checkedFormats.includes(id)) ? null : checkedFormats;
 
   const existing = photoId ? await getPhotoById(photoId) : null;
   if (photoId && !existing) return { error: "Photo introuvable." };
@@ -179,7 +184,7 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
   if (existing) {
     const { error } = await db()
       .from("photos")
-      .update({ ...fields, ...(imageFields ?? {}) })
+      .update({ ...fields, format_ids, ...(imageFields ?? {}) })
       .eq("id", existing.id);
     if (error) {
       if (uploaded.length) await db().storage.from(PHOTO_BUCKET).remove(uploaded);
@@ -190,7 +195,7 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
     const slug = await uniqueSlug(fields.title_fr);
     const { data, error } = await db()
       .from("photos")
-      .insert({ ...fields, ...imageFields!, slug })
+      .insert({ ...fields, format_ids, ...imageFields!, slug })
       .select("id")
       .single();
     if (error || !data) {
@@ -328,6 +333,8 @@ export async function saveSettings(_: FormState, form: FormData): Promise<FormSt
       "siret",
       "vat_mention",
       "legal_address",
+      "fabrication_fr",
+      "fabrication_en",
     ].map((k) => [k, str(form, k).slice(0, 5000)]),
   );
 

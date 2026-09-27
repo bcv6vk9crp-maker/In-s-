@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatEuros, formatOrderNumber, shippingCents, unitPriceCents } from "@/lib/pricing";
+import { formatEuros, formatOrderNumber, formatsForPhoto, shippingCents, unitPriceCents } from "@/lib/pricing";
 
 // Formats par défaut proposés à Ines (modifiables dans l'admin)
 const f20 = { id: "a", label: "20 × 30 cm", price_cents: 3500, frame_cents: 600, shipping_cents: 600 };
@@ -43,5 +43,14 @@ describe("formatage", () => {
   it("numérote les commandes", () => {
     expect(formatOrderNumber(7)).toBe("IB-0007");
     expect(formatOrderNumber(12345)).toBe("IB-12345");
+  });
+});
+
+describe("formatsForPhoto", () => {
+  it("propose tous les formats si Ines n'a rien restreint", () => {
+    expect(formatsForPhoto([f20, f30, f60], null).map((f) => f.id)).toEqual(["a", "b", "d"]);
+  });
+  it("ne propose que les formats cochés pour la photo", () => {
+    expect(formatsForPhoto([f20, f30, f60], ["a", "b"]).map((f) => f.id)).toEqual(["a", "b"]);
   });
 });

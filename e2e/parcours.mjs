@@ -136,6 +136,7 @@ await admin.fill("#instagram", "@ines.b.photo");
 await admin.fill("#about_fr", "Je photographie les gens que je croise.");
 await admin.fill("#about_en", "I photograph the people I meet.");
 await admin.fill("#legal_name", "Ines B.");
+await admin.fill("#fabrication_fr", "Papier d'art mat, tirage signé, remis sous 10 jours.");
 await admin.fill("#siret", "");
 await admin.click("text=Enregistrer les réglages");
 await admin.waitForSelector("text=Réglages enregistrés.");
@@ -225,8 +226,13 @@ const transforms = await b.evaluate(() =>
   [...document.querySelectorAll(".print-frame")].map((e) => getComputedStyle(e).transform),
 );
 check("GA-04", "les photos sont droites (aucune rotation)", transforms.every((t) => t === "none"), transforms.join(","));
-const landscape = await b.locator(".print:has-text('Les cousines') img").boundingBox();
-check("GA-06", "une photo en paysage garde sa forme réelle dans la galerie", landscape.width > landscape.height * 1.3, `${landscape.width}×${landscape.height}`);
+const landscape = await b.evaluate(() => {
+  const img = [...document.querySelectorAll(".print")].find((p) => p.textContent.includes("Les cousines")).querySelector("img");
+  return { ratio: img.naturalWidth / img.naturalHeight, fit: getComputedStyle(img).objectFit };
+});
+check("GA-06", "une photo en paysage est affichée entière (non rognée) dans son passe-partout", landscape.ratio > 1.3 && landscape.fit === "contain", JSON.stringify(landscape));
+const frames = await b.evaluate(() => [...document.querySelectorAll(".gallery .print-frame")].map((f) => Math.round(f.getBoundingClientRect().height)));
+check("GA-07", "grille alignée : tous les passe-partout ont la même taille", new Set(frames).size === 1, frames.join(","));
 
 await b.click(".chips a:has-text('Portraits')");
 await b.waitForURL(/collection=portraits/, { waitUntil: "commit" });
@@ -335,12 +341,21 @@ await b.fill("#phone", "+33 6 12 34 56 78");
 await b.fill("#addressLine", "12 rue du Panier");
 await b.click("button:has-text('Livraison à domicile')");
 check("PO-03", "en livraison, port de 12 € ajouté : total = 287 €", euros(await b.textContent(".summary .total-row")).endsWith("287 €"));
+// Livraison en France métropolitaine uniquement
+check("ZO-01", "en livraison, le pays est fixé sur France et la zone est annoncée", (await b.inputValue("#country")) === "France" && (await b.getAttribute("#country", "readonly")) !== null && (await b.textContent("form")).includes("France métropolitaine"));
+await b.fill("#postalCode", "97100");
+await b.click("button:has-text('Envoyer ma commande')");
+await b.waitForSelector(".alert");
+const zoneFlag = await b.evaluate(() => [...document.querySelectorAll("[data-invalid=true] input")].map((i) => i.id).join(","));
+check("ZO-02", "un code postal d'outre-mer est refusé en livraison", !sent() && zoneFlag === "postalCode", zoneFlag);
+await b.fill("#postalCode", "13002");
 await b.fill("#message", "=Cadre noir si possible");
 await b.click("button:has-text('Envoyer ma commande')");
 await b.waitForURL(/\/commande\/merci\?n=IB-/, { waitUntil: "commit" });
 await b.waitForSelector("text=Merci");
 check("CM-01", "commande en livraison envoyée, numéro affiché", (await b.textContent("main")).includes("IB-0001"));
 check("CM-09", "la page de remerciement dit « transmise à la photographe » sans promettre d'email", (await b.textContent("main")).includes("transmise à la photographe") && !(await b.textContent("main")).includes("récapitulatif"));
+check("CM-13", "la page de remerciement annonce une réponse sous 48 h", (await b.textContent("main")).includes("sous 48 h"));
 check("CM-06", "le panier est vidé après envoi", (await b.locator(".cart-count").count()) === 0);
 
 // Retrait en main propre
@@ -373,6 +388,32 @@ await b.waitForSelector(".alert");
 check("CM-05", "une photo masquée est retirée du panier avec un message", (await b.textContent(".alert")).includes("plus disponible"));
 const r404 = await b.goto(`${BASE}/photos/les-cousines`);
 check("GA-05", "une photo masquée n'est plus accessible (404)", r404.status() === 404);
+
+// Formats possibles par photo : Ines retire le 60 × 90 pour « Samir au port »
+await b.goto(`${BASE}/photos/samir-au-port`);
+await b.waitForLoadState("networkidle");
+check("FI-04", "le texte de fabrication commun s'affiche sur la fiche", (await b.textContent(".purchase")).includes("Papier d'art mat"));
+await b.click("button:has-text('60 × 90 cm')");
+await addToCart(b);
+await admin.goto(`${BASE}/admin/photos`);
+await admin.click("a:has-text('Samir au port')");
+await admin.waitForSelector("text=Formats possibles pour cette photo");
+await admin.uncheck("label.check:has-text('60 × 90 cm') input");
+await admin.click("button:has-text('Enregistrer')");
+await admin.waitForURL(`${BASE}/admin/photos`, { waitUntil: "commit" });
+await admin.waitForSelector("a:has-text('Samir au port')");
+await b.goto(`${BASE}/photos/samir-au-port`);
+await b.waitForSelector(".purchase");
+check("PF-01", "un format retiré pour une photo n'est plus proposé sur sa fiche", !(await b.textContent(".purchase")).includes("60 × 90 cm"));
+await b.goto(`${BASE}/photos/lea-marseille`);
+await b.waitForSelector(".purchase");
+check("PF-02", "les autres photos proposent toujours ce format", (await b.textContent(".purchase")).includes("60 × 90 cm"));
+await b.goto(`${BASE}/commande`);
+await fillBuyer(b, "Tom", "Durand", "tom@example.com");
+await b.check("#consent");
+await b.click("button:has-text('Envoyer ma commande')");
+await b.waitForSelector(".alert");
+check("PF-03", "à la commande, la ligne au format retiré est enlevée du panier avec un message", (await b.textContent(".alert")).includes("n'est plus proposé"));
 
 // Limite anti-abus : 3 commandes par email et par quart d'heure
 for (let n = 0; n < 3; n++) {
@@ -453,7 +494,7 @@ check("CD-03", "le filtre par statut fonctionne", (await admin.locator("tbody tr
 
 const csv = await admin.request.get(`${BASE}/admin/export`);
 const csvText = await csv.text();
-check("EX-01", "export CSV téléchargé, avec le port", csv.status() === 200 && csvText.includes("IB-0001") && csvText.includes("Port (€)") && csvText.includes(";12,00;287,00;"));
+check("EX-01", "export CSV téléchargé, avec le port", csv.status() === 200 && csvText.includes("IB-0001") && csvText.includes("Frais de port (€)") && csvText.includes(";12,00;287,00;"));
 check("EX-02", "les formules Excel sont neutralisées", csvText.includes("'=Cadre noir") && csvText.includes("'+33 6"));
 const anonCsv = await b.request.get(`${BASE}/admin/export`);
 check("SE-01", "export refusé sans session admin", anonCsv.status() === 401);

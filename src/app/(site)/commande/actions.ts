@@ -3,7 +3,7 @@
 import { getFormats, getSettings, getVisiblePhotosByIds } from "@/lib/data";
 import { sendOrderEmails } from "@/lib/email";
 import { mergeCartItems, orderSchema } from "@/lib/order-schema";
-import { formatOrderNumber, shippingCents, unitPriceCents } from "@/lib/pricing";
+import { formatOrderNumber, formatsForPhoto, shippingCents, unitPriceCents } from "@/lib/pricing";
 import { db } from "@/lib/supabase/db";
 
 type Result =
@@ -14,6 +14,8 @@ type Result =
       fields: string[];
       unavailable: string[];
       unavailableFormats: string[];
+      // Format retiré pour une photo précise (les autres photos le proposent peut-être encore)
+      unavailableLines: { photoId: string; formatId: string }[];
     };
 
 const failure = (reason: "fields" | "unavailable" | "tooMany" | "server", extra: Partial<Result> = {}): Result => ({
@@ -22,6 +24,7 @@ const failure = (reason: "fields" | "unavailable" | "tooMany" | "server", extra:
   fields: [],
   unavailable: [],
   unavailableFormats: [],
+  unavailableLines: [],
   ...extra,
 } as Result);
 
@@ -75,6 +78,10 @@ async function createOrder(input: unknown): Promise<Result> {
   if (unavailable.length > 0 || unavailableFormats.length > 0) {
     return failure("unavailable", { unavailable, unavailableFormats });
   }
+  const unavailableLines = items
+    .filter((i) => !formatsForPhoto(formats, byId.get(i.photoId)!.format_ids).some((f) => f.id === i.formatId))
+    .map(({ photoId, formatId }) => ({ photoId, formatId }));
+  if (unavailableLines.length > 0) return failure("unavailable", { unavailableLines });
 
   const lines = items.map((item) => {
     const photo = byId.get(item.photoId)!;

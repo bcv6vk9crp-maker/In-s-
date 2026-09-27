@@ -23,7 +23,7 @@ export default async function TermsPage() {
       <ul style={{ margin: 0, paddingLeft: 20, whiteSpace: "normal" }}>
         {formats.map((f) => (
           <li key={f.id}>
-            {f.label} : {formatEuros(f.price_cents)} (cadre : +{formatEuros(f.frame_cents)} ; port en livraison :{" "}
+            {f.label} : {formatEuros(f.price_cents)} (cadre : +{formatEuros(f.frame_cents)} ; frais de port en livraison :{" "}
             {formatEuros(f.shipping_cents)})
           </li>
         ))}
@@ -41,7 +41,10 @@ export default async function TermsPage() {
         paiement. La vente n&apos;est conclue qu&apos;après cette confirmation et la réception du paiement.
       </p>
       <h2>5. Livraison et retrait</h2>
-      <p>Les tirages sont remis en main propre ou expédiés à l&apos;adresse indiquée, selon le choix fait lors de la commande.</p>
+      <p>
+        Les tirages sont remis en main propre ou expédiés à l&apos;adresse indiquée, selon le choix fait lors de la
+        commande. La livraison n&apos;est proposée qu&apos;en France métropolitaine (Corse comprise).
+      </p>
       <h2>6. Droit de rétractation</h2>
       <p>
         Conformément au Code de la consommation, l&apos;acheteur dispose d&apos;un délai de 14 jours à compter de la

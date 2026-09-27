@@ -32,7 +32,19 @@ export const orderSchema = z
     consent: z.literal(true),
     locale: z.enum(["fr", "en"]),
     items: z.array(cartItemSchema).min(1).max(50),
+  })
+  .superRefine((o, ctx) => {
+    // Livraison en France métropolitaine uniquement (Corse comprise, DOM-TOM exclus).
+    if (o.deliveryMethod !== "livraison") return;
+    if (o.country.trim().toLowerCase() !== "france") ctx.addIssue({ code: "custom", path: ["country"], message: "zone" });
+    if (!isMainlandPostalCode(o.postalCode)) ctx.addIssue({ code: "custom", path: ["postalCode"], message: "zone" });
   });
+
+/** Code postal de France métropolitaine : 5 chiffres, hors outre-mer (97, 98). */
+export function isMainlandPostalCode(code: string): boolean {
+  const c = code.replace(/\s/g, "");
+  return /^\d{5}$/.test(c) && !/^9[78]/.test(c);
+}
 export type OrderInput = z.infer<typeof orderSchema>;
 
 /** Regroupe les lignes identiques (même photo, format et cadre), en plafonnant la quantité. */
