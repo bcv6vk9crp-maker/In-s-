@@ -2,7 +2,7 @@
 
 Ce document décrit ce que l'application doit permettre et comment le vérifier avant la mise en ligne. Il commence par les décisions prises avec Ines et par les questions encore ouvertes.
 
-- **Tests automatiques** : `npm test` (règles de calcul, 20 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 83 vérifications, voir `e2e/parcours.mjs`).
+- **Tests automatiques** : `npm test` (règles de calcul, 20 tests) et `npm run test:e2e` (parcours complet dans un navigateur, 85 vérifications, voir `e2e/parcours.mjs`).
 - **Tests manuels** : ceux qu'un robot ne peut pas faire (vrais emails, vrais téléphones, vraies photos d'Ines). Ils sont marqués **Manuel** ci-dessous.
 
 ---
@@ -19,6 +19,7 @@ Ce document décrit ce que l'application doit permettre et comment le vérifier 
 | Factures | Ines les fait en dehors du site. Coordonnées des acheteurs effacées au bout d'un an |
 | Nom de domaine | Lancement sans domaine. La page de remerciement dit « commande transmise à la photographe », sans promettre d'email. **Condition** : le compte Resend doit être créé avec l'adresse qui reçoit les commandes |
 | Mot de passe | Lien « mot de passe oublié » sur la page de connexion |
+| Protection des photos | Grande image de la fiche couverte d'un filigrane « © Ines. B » répété et incrusté dans le fichier ; galerie en vignette réduite ; clic droit « Enregistrer l'image » désactivé sur les photos. Une capture d'écran ne peut pas être empêchée, mais elle reste inutilisable |
 | Style des textes | Pas d'écriture manuscrite : la petite phrase sous les titres et le « Merci ! » sont en texte sobre (italique discret) |
 | Formulaire de commande | Prénom, nom, email, téléphone et adresse postale obligatoires, **y compris en retrait**. Case d'accord obligatoire. Seul le message est facultatif |
 | Retrait | Lieu de retrait réglé dans l'admin, affiché à l'acheteur |
@@ -136,9 +137,12 @@ Statut : ✅ vérifié automatiquement · 🔲 à faire à la main avant la mise
 | CO-01 | Créer deux collections | Collections créées, formulaire vidé | Auto | ✅ |
 | PH-01 | Ajouter trois photos (dont une en paysage) avec collections | Photos listées dans l'admin | Auto | ✅ |
 | PH-02 | Enregistrer une photo sans image | Refus avec message | Auto | ✅ |
-| PH-03 | Image de 3000 × 4000 px | En ligne en 1600 px maximum, avec filigrane « © Ines. B » | Auto | ✅ |
-| PH-04 | Vraies photos d'Ines : paysage, carré, très grand fichier (plus de 30 Mo) | Filigrane lisible, envoi en quelques secondes | Manuel | 🔲 |
-| PH-05 | Photo prise sur iPhone (HEIC), envoyée depuis l'iPhone | L'image est acceptée (Safari la convertit en JPEG) | Manuel | 🔲 |
+| PH-03 | Galerie | Vignette de 900 px maximum, signée dans le coin | Auto | ✅ |
+| PH-04 | Fiche | Grande image distincte, 1600 px maximum | Auto | ✅ |
+| PH-05 | Filigrane de la grande image | Présent sur les quatre quarts de la photo (mesure des pixels) | Auto | ✅ |
+| PH-08 | Vraies photos d'Ines : filigrane lisible sur zones claires (neige, ciel) et sombres, sans gâcher la photo | Validation visuelle par Ines | Manuel | 🔲 |
+| PH-06 | Vraies photos d'Ines : paysage, carré, très grand fichier (plus de 30 Mo) | Filigrane lisible, envoi en quelques secondes | Manuel | 🔲 |
+| PH-07 | Photo prise sur iPhone (HEIC), envoyée depuis l'iPhone | L'image est acceptée (Safari la convertit en JPEG) | Manuel | 🔲 |
 
 ### Galerie et fiche (UC-A1, A2)
 | ID | Cas | Résultat attendu | Type | Statut |

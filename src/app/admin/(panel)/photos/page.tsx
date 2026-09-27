@@ -37,7 +37,7 @@ export default async function PhotosPage() {
                 <tr key={p.id}>
                   <td>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.image_url} alt="" />
+                    <img src={p.thumb_url} alt="" />
                   </td>
                   <td>
                     <Link href={`/admin/photos/${p.id}`}>{p.title_fr}</Link>

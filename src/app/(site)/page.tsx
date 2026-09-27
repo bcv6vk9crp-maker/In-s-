@@ -56,7 +56,7 @@ export default async function HomePage(props: PageProps<"/">) {
               <Link key={p.id} href={`/photos/${p.slug}`} className="print">
                 <div className="print-frame">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.image_url} alt={title} width={p.width} height={p.height} loading="lazy" />
+                  <img src={p.thumb_url} alt={title} draggable={false} width={p.width} height={p.height} loading="lazy" />
                 </div>
                 <div className="print-caption">
                   <b>{title}</b>

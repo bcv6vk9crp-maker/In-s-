@@ -97,6 +97,9 @@ export async function deleteOrder(id: string) {
 
 /* ---------- Photos ---------- */
 
+const storedFiles = (p: { image_path: string; thumb_path: string | null }) =>
+  [p.image_path, p.thumb_path].filter((x): x is string => !!x);
+
 async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
   const root = slugify(base);
   const { data } = await db().from("photos").select("id, slug").like("slug", `${root}%`);
@@ -143,24 +146,34 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
   const existing = photoId ? await getPhotoById(photoId) : null;
   if (photoId && !existing) return { error: "Photo introuvable." };
 
-  // Image déjà réduite et filigranée dans le navigateur d'Ines.
+  // Deux versions préparées dans le navigateur d'Ines : la grande image filigranée
+  // sur toute sa surface (fiche) et la vignette (galerie, panier, admin).
   const image = form.get("image");
-  let imageFields: { image_path: string; width: number; height: number } | null = null;
+  const thumb = form.get("thumb");
+  let imageFields: { image_path: string; thumb_path: string; width: number; height: number } | null = null;
   if (image instanceof File && image.size > 0) {
-    if (image.type !== "image/jpeg") return { error: "Format d'image inattendu." };
-    if (image.size > 3.5 * 1024 * 1024) return { error: "Image trop lourde." };
+    if (!(thumb instanceof File) || thumb.size === 0) return { error: "Vignette manquante : rechoisissez l'image." };
+    if (image.type !== "image/jpeg" || thumb.type !== "image/jpeg") return { error: "Format d'image inattendu." };
+    if (image.size > 3.5 * 1024 * 1024 || thumb.size > 2 * 1024 * 1024) return { error: "Image trop lourde." };
     const width = Number(form.get("width"));
     const height = Number(form.get("height"));
     if (!(width > 0 && height > 0)) return { error: "Dimensions de l'image manquantes." };
-    const path = `${randomUUID()}.jpg`;
-    const { error } = await db()
-      .storage.from(PHOTO_BUCKET)
-      .upload(path, image, { contentType: "image/jpeg", cacheControl: "31536000" });
-    if (error) return { error: `Envoi de l'image impossible : ${error.message}` };
-    imageFields = { image_path: path, width, height };
+    const base = randomUUID();
+    const paths = { image_path: `${base}.jpg`, thumb_path: `${base}-vignette.jpg` };
+    for (const [path, file] of [[paths.image_path, image], [paths.thumb_path, thumb]] as const) {
+      const { error } = await db()
+        .storage.from(PHOTO_BUCKET)
+        .upload(path, file, { contentType: "image/jpeg", cacheControl: "31536000" });
+      if (error) {
+        await db().storage.from(PHOTO_BUCKET).remove([paths.image_path, paths.thumb_path]);
+        return { error: `Envoi de l'image impossible : ${error.message}` };
+      }
+    }
+    imageFields = { ...paths, width, height };
   } else if (!existing) {
     return { error: "Choisissez une image." };
   }
+  const uploaded = imageFields ? [imageFields.image_path, imageFields.thumb_path] : [];
 
   let id = photoId;
   if (existing) {
@@ -169,10 +182,10 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
       .update({ ...fields, ...(imageFields ?? {}) })
       .eq("id", existing.id);
     if (error) {
-      if (imageFields) await db().storage.from(PHOTO_BUCKET).remove([imageFields.image_path]);
+      if (uploaded.length) await db().storage.from(PHOTO_BUCKET).remove(uploaded);
       return { error: error.message };
     }
-    if (imageFields) await db().storage.from(PHOTO_BUCKET).remove([existing.image_path]);
+    if (imageFields) await db().storage.from(PHOTO_BUCKET).remove(storedFiles(existing));
   } else {
     const slug = await uniqueSlug(fields.title_fr);
     const { data, error } = await db()
@@ -181,7 +194,7 @@ export async function savePhoto(photoId: string | null, _: FormState, form: Form
       .select("id")
       .single();
     if (error || !data) {
-      await db().storage.from(PHOTO_BUCKET).remove([imageFields!.image_path]);
+      await db().storage.from(PHOTO_BUCKET).remove(uploaded);
       return { error: error?.message ?? "Photo non enregistrée." };
     }
     id = data.id;
@@ -205,7 +218,7 @@ export async function deletePhoto(id: string) {
   if (!photo) return;
   const { error } = await db().from("photos").delete().eq("id", id);
   if (error) fail(error.message);
-  await db().storage.from(PHOTO_BUCKET).remove([photo.image_path]);
+  await db().storage.from(PHOTO_BUCKET).remove(storedFiles(photo));
   revalidatePath("/", "layout");
   redirect("/admin/photos");
 }

@@ -33,7 +33,7 @@ export default async function PhotoPage(props: PageProps<"/photos/[slug]">) {
       <div className="photo-page">
         <div className="print-frame">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo.image_url} alt={title} width={photo.width} height={photo.height} />
+          <img src={photo.image_url} alt={title} draggable={false} width={photo.width} height={photo.height} />
         </div>
         <div className="purchase card">
           <div className="stack" style={{ gap: 8 }}>
@@ -47,7 +47,7 @@ export default async function PhotoPage(props: PageProps<"/photos/[slug]">) {
               slug: photo.slug,
               titleFr: photo.title_fr,
               titleEn: photo.title_en,
-              imageUrl: photo.image_url,
+              imageUrl: photo.thumb_url,
             }}
             formats={formats}
           />

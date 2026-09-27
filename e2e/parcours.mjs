@@ -191,7 +191,36 @@ const natural = await b.evaluate(() => {
   const i = document.querySelector(".gallery img");
   return Math.max(i.naturalWidth, i.naturalHeight);
 });
-check("PH-03", "l'image en ligne est réduite à 1600 px maximum", natural <= 1600, `${natural} px`);
+check("PH-03", "la galerie affiche une vignette (900 px maximum)", natural <= 900, `${natural} px`);
+// La fiche affiche la grande image, filigranée sur toute sa surface
+const thumbSrc = await b.getAttribute(".gallery .print img", "src");
+await b.goto(`${BASE}/photos/lea-marseille`);
+const largeSrc = await b.getAttribute(".photo-page img", "src");
+const largeSize = await b.evaluate(() => { const i = document.querySelector(".photo-page img"); return Math.max(i.naturalWidth, i.naturalHeight); });
+check("PH-04", "la fiche affiche une grande image distincte (1600 px maximum)", largeSrc !== thumbSrc && largeSize <= 1600 && largeSize > 900, `${largeSize} px`);
+const toData = async (url) => "data:image/jpeg;base64," + Buffer.from(await (await b.request.get(url)).body()).toString("base64");
+const [largeData, thumbData] = [await toData(largeSrc), await toData(thumbSrc.replace(/^\//, BASE + "/"))];
+const lab = await (await browser.newContext()).newPage();
+const coverage = await lab.evaluate(async ([large, thumb]) => {
+  const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
+  const [L, T] = await Promise.all([load(large), load(thumb)]);
+  const w = L.naturalWidth, h = L.naturalHeight;
+  const px = (img) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.drawImage(img, 0, 0, w, h); return x.getImageData(0, 0, w, h).data; };
+  const a = px(L), t = px(T);
+  // Écarts marqués entre grande image et vignette, par quart d'image (hors coin signé)
+  const quads = [0, 0, 0, 0], totals = [0, 0, 0, 0];
+  for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+    if (x > w * 0.8 && y > h * 0.85) continue;
+    const i = (y * w + x) * 4, q = (y < h / 2 ? 0 : 2) + (x < w / 2 ? 0 : 1);
+    totals[q]++;
+    if (Math.abs(a[i] - t[i]) + Math.abs(a[i + 1] - t[i + 1]) + Math.abs(a[i + 2] - t[i + 2]) > 60) quads[q]++;
+  }
+  return quads.map((n, k) => n / totals[k]);
+}, [largeData, thumbData]);
+check("PH-05", "le filigrane couvre les quatre quarts de la grande image", coverage.every((r) => r > 0.004), coverage.map((r) => (r * 100).toFixed(2) + " %").join(" · "));
+await b.goto(BASE);
+await b.waitForSelector(".gallery img");
+
 const transforms = await b.evaluate(() =>
   [...document.querySelectorAll(".print-frame")].map((e) => getComputedStyle(e).transform),
 );

@@ -18,7 +18,7 @@ Il n'y a **aucun paiement en ligne**. L'acheteur remplit son panier et envoie se
 **Espace admin** (`/admin`, réservé à Ines) :
 - tableau de bord : commandes à traiter, chiffres du mois, photos les plus demandées ;
 - commandes : filtre par statut (Nouvelle → Contactée → Payée → Expédiée / remise, ou Annulée), notes internes, anonymisation, suppression, export CSV lisible dans Excel ;
-- photos : ajout une par une. L'image est réduite à 1600 px et reçoit le filigrane « © Ines. B » **dans le navigateur**, donc l'original n'est jamais mis en ligne ;
+- photos : ajout une par une. **Dans le navigateur d'Ines**, le site prépare une vignette de 900 px pour la galerie, signée « © Ines. B » dans le coin, et une grande image de 1600 px pour la fiche, où le filigrane est **incrusté en motif répété sur toute la photo**. Une capture d'écran reste donc marquée partout, et l'original n'est jamais mis en ligne ;
 - collections, avec une petite note manuscrite affichée sous le titre ;
 - formats et prix : Ines ajoute, modifie ou désactive ses formats. Pour chacun : prix du tirage, supplément cadre, forfait de port. Le port est compté une seule fois par commande, au montant du plus grand format du panier ;
 - réglages : email d'alerte, lieu de retrait, textes du site, informations légales ;
@@ -33,7 +33,7 @@ Les comptes sont créés au nom d'Ines, avec son email. Elle en reste propriéta
 ### 1. Supabase (base de données et stockage des images)
 
 1. Créer un compte sur [supabase.com](https://supabase.com), puis un projet. **Région : Europe** (Paris ou Frankfurt), pour le RGPD.
-2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**. Recommencer avec [`0002_formats_port_retrait.sql`](supabase/migrations/0002_formats_port_retrait.sql), qui crée les 4 formats par défaut.
+2. Ouvrir **SQL Editor → New query**, coller le contenu de [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), puis cliquer **Run**. Recommencer avec [`0002_formats_port_retrait.sql`](supabase/migrations/0002_formats_port_retrait.sql), qui crée les 4 formats par défaut, puis avec [`0003_vignettes.sql`](supabase/migrations/0003_vignettes.sql).
 3. Ouvrir **Authentication → Users → Add user → Create new user** : saisir l'email et le mot de passe qu'Ines utilisera pour se connecter à l'admin, et cocher *Auto Confirm User*.
 4. Dans **Authentication → Sign In / Providers**, désactiver *Allow new users to sign up*, pour que personne d'autre ne puisse créer de compte.
 5. Dans **Project Settings → API Keys**, noter l'URL du projet, la *Publishable key* et la *Secret key*.

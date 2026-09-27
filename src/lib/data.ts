@@ -43,16 +43,18 @@ export type Photo = {
   description_en: string;
   year: number | null;
   image_path: string;
+  thumb_path: string | null; // vignette (galerie) ; null pour les photos ajoutées avant sa création
   width: number;
   height: number;
   position: number;
   visible: boolean;
   created_at: string;
   collection_ids: string[];
-  image_url: string;
+  image_url: string; // grande image, filigranée sur toute sa surface (fiche)
+  thumb_url: string; // vignette (galerie, panier, admin)
 };
 
-type PhotoRow = Omit<Photo, "collection_ids" | "image_url"> & {
+type PhotoRow = Omit<Photo, "collection_ids" | "image_url" | "thumb_url"> & {
   photo_collections: { collection_id: string }[] | null;
 };
 
@@ -64,6 +66,7 @@ function toPhoto(row: PhotoRow): Photo {
     ...rest,
     collection_ids: (photo_collections ?? []).map((pc) => pc.collection_id),
     image_url: publicImageUrl(row.image_path),
+    thumb_url: publicImageUrl(row.thumb_path ?? row.image_path),
   };
 }
 
