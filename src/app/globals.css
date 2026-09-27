@@ -111,7 +111,7 @@ p { margin: 0; }
 .page-head { display: grid; gap: 6px; margin-block: 24px 20px; }
 /* Grille alignée (choix d'Ines) : chaque photo entière dans un passe-partout de même taille ; l'ordre se lit ligne par ligne. */
 .gallery { display: grid; gap: 34px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); margin-top: 28px; }
-.print { display: grid; gap: 10px; text-decoration: none; align-content: start; }
+.print { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 10px; text-decoration: none; align-content: start; }
 .print-frame { background: var(--paper); padding: 8px; box-shadow: var(--shadow); transition: transform 0.25s ease; }
 .print:hover .print-frame { transform: translateY(-3px); }
 /* position relative + image en absolu : la taille du passe-partout ne dépend que de sa largeur, jamais de la photo. */
