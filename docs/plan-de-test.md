@@ -29,7 +29,7 @@ En attendant une réponse, le site garde le comportement indiqué dans la colonn
 
 | # | Question | Choix proposés (★ recommandé) | En attendant |
 |---|---|---|---|
-| QA-1 | La petite phrase manuscrite sous le titre d'une collection reste-t-elle penchée ? | ★ La garder penchée · La redresser · Ne plus l'afficher | Penchée |
+| QA-1 | Style de la petite phrase sous les titres (l'écriture manuscrite peut faire « vieux carnet » à côté de photos de rue contemporaines) | ★ Texte sobre en italique · Manuscrite penchée · Manuscrite droite · Aucune phrase | Manuscrite penchée |
 | QA-2 | Comment afficher les infos de fabrication (papier, délai, signature) ? | ★ Texte commun modifiable dans les réglages · Texte par photo · Pas affiché | Rien n'est affiché |
 | QA-3 | Qui écrit les textes À propos et Contact, et la version anglaise ? | ★ Ines écrit, Claude traduit · Ines fait tout · Claude propose un brouillon | Textes vides, saisissables dans l'admin |
 | QA-4 | Création des comptes Supabase, Resend et Vercel | ★ Ensemble (environ 30 min) · Ines seule avec le guide | Rien n'est créé, **bloquant pour la mise en ligne** |
